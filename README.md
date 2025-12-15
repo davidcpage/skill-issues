@@ -1,4 +1,4 @@
-# skill-issues
+# Skill(issues)
 
 Lightweight, local-first skills for Claude Code.
 
