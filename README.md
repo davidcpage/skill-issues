@@ -37,7 +37,7 @@ issues (standalone)
 
 ```bash
 # Clone this repo
-git clone https://github.com/YOUR_USERNAME/skill-issues.git
+git clone https://github.com/davidcpage/skill-issues.git
 
 # Copy skills to your project
 cp -r skill-issues/.claude/skills/issues /path/to/your/project/.claude/skills/
@@ -55,7 +55,7 @@ If you want to receive updates as the skills evolve, symlink to a local clone:
 
 ```bash
 # Clone skill-issues somewhere permanent
-git clone https://github.com/YOUR_USERNAME/skill-issues.git ~/tools/skill-issues
+git clone https://github.com/davidcpage/skill-issues.git ~/tools/skill-issues
 
 # In your project, create symlinks
 mkdir -p .claude/skills
