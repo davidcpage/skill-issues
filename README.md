@@ -41,30 +41,23 @@ These skills are designed for natural conversation with Claude Code. Just descri
 **Starting a session:**
 > "What issues are ready to work on?"
 
-```json
-[
-  {
-    "id": "050",
-    "title": "Refocus README on skill usage with examples",
-    "type": "task",
-    "priority": 2,
-    "status": "open",
-    "blocked_by": []
-  }
-]
-```
+There's one issue ready to work on:
+
+- **#050 - Refocus README on skill usage with examples** (task, priority 2)
 
 **Creating issues:**
 > "Create an issue for the login timeout bug - it's high priority"
 
-```json
-{"created": "051"}
-```
+Created **#051 - Login timeout bug** as a high-priority bug.
 
 **During work:**
 > "Add a note to issue 051 - discovered it only happens with expired sessions"
 
+Added note to #051.
+
 > "Close issue 051 - fixed by refreshing auth tokens before API calls"
+
+Closed #051 - the auth token refresh fix resolved the timeout.
 
 **Visualizing dependencies:**
 > "Show me the issue dependency diagram"
@@ -81,34 +74,25 @@ flowchart LR
 **Resuming context:**
 > "What did we work on last session?"
 
-```json
-{
-  "id": "s027",
-  "date": "2025-12-15",
-  "topic": "block-unblock-commands",
-  "learnings": [
-    "Post-hoc dependency modification is a reasonable escape hatch",
-    "Two explicit commands are cleaner than one that replaces the whole list"
-  ],
-  "issues_worked": ["045"]
-}
-```
+Last session (s027, Dec 15) we worked on **block/unblock commands** and closed issue #045.
+
+Key learnings:
+- Post-hoc dependency modification is a reasonable escape hatch
+- Two explicit commands are cleaner than one that replaces the whole list
 
 **Finding open threads:**
 > "What open questions do we have?"
 
-```json
-[
-  "How well does this scale with multiple concurrent agents?",
-  "Should notes support optional session field for tracking context?",
-  "What's the best repo structure for publishing skill bundles?"
-]
-```
+Open questions across recent sessions:
+
+- How well does this scale with multiple concurrent agents?
+- Should notes support optional session field for tracking context?
+- What's the best repo structure for publishing skill bundles?
 
 **Ending a session:**
 > "Let's wrap up - we learned that Mermaid LR layout works better for tall diagrams"
 
-Claude creates a session entry capturing learnings, open questions, and issues worked.
+Created session s028 capturing learnings and issues worked.
 
 ### ADRs
 
