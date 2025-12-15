@@ -9,7 +9,7 @@ Personal session memory for AI agent conversations. Captures learnings, open que
 
 **Portable:** This skill directory can be copied to any repo. Data lives in `.memory/sessions.jsonl` (project root).
 
-**Dependency:** This skill references the [issues skill](../issues/SKILL.md) via the `issues_worked` field. Issues do not reference sessions (one-way dependency). See `.decisions/001-sessions-vs-issues.md` for rationale.
+**Dependency:** This skill optionally references the [issues skill](../issues/SKILL.md) via the `issues_worked` field. The dependency is one-way: sessions can reference issues, but issues never reference sessions.
 
 ## Tools
 

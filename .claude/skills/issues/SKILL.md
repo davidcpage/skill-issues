@@ -72,8 +72,6 @@ Four event types:
 - `content`: Free-form text for notes (note only)
 - `reason`: Explanation for update or closure (updated or closed)
 
-**Note:** Issues do not reference sessions. Sessions reference issues via `issues_worked`. See `.decisions/001-sessions-vs-issues.md` for rationale.
-
 **Mutability:** Most fields are immutable after creation. Use `updated` events to change `priority`, `blocked_by`, or `labels`. Use `note` events to add context. If title/description are fundamentally wrong, close and recreate.
 
 ## Reading Issues

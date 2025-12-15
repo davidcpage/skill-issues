@@ -14,6 +14,21 @@ Three tools designed for AI coding agents, stored as simple files in your repo:
 
 All data lives in your repo as append-only JSONL files - no external services, no daemons, easy to read and edit directly.
 
+### Skill Dependencies
+
+Each skill can be used independently, but they work well together:
+
+```
+issues (standalone)
+   ^
+   |-- sessions (can reference issues via issues_worked)
+   |-- adr (can link related issues)
+```
+
+- **issues** is fully standalone - copy it alone to any repo
+- **sessions** optionally tracks which issues you worked on
+- **adr** optionally links to related issues in decision records
+
 ## Quick Start
 
 ### Option 1: Copy skills to your project
