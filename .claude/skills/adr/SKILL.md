@@ -1,3 +1,8 @@
+---
+name: adr
+description: Architecture Decision Records for documenting significant technical decisions with context and trade-offs. Use when making architectural choices, recording design rationale, or reviewing past decisions.
+---
+
 # ADR Skill (Architecture Decision Records)
 
 Lightweight decision records for capturing significant technical decisions with their context and reasoning.

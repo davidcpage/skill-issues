@@ -6,37 +6,17 @@ Instructions for Claude Code when working with this repository.
 
 This repo provides three Claude Code skills designed around **protocol fitness** - formats that LLMs know well from training data.
 
-### Issues Skill
-Local-first issue tracking with GitHub Issues semantics.
+- **issues** - Local-first issue tracking with GitHub Issues semantics
+- **sessions** - Capture learnings, open questions, and next actions across sessions
+- **adr** - Architecture Decision Records using familiar RFC/PEP patterns
 
-```bash
-python3 .claude/skills/issues/issues.py --ready                    # Unblocked issues
-python3 .claude/skills/issues/issues.py --create "Title" -d "Desc" # Create issue
-python3 .claude/skills/issues/issues.py --close ID "Reason"        # Close issue
-python3 .claude/skills/issues/issues.py --note ID "Note text"      # Add note
-python3 .claude/skills/issues/issues.py --diagram                  # Dependency graph
-```
-
-### Sessions Skill
-Capture learnings, open questions, and next actions across sessions.
-
-```bash
-python3 .claude/skills/sessions/sessions.py                        # Last session
-python3 .claude/skills/sessions/sessions.py --open-questions       # All open questions
-python3 .claude/skills/sessions/sessions.py --create "topic" \
-  -l "Learning" -q "Question" -a "Action"                          # Create session
-```
-
-### ADR Skill
-Architecture Decision Records using familiar RFC/PEP patterns.
-
-See `.claude/skills/adr/SKILL.md` for conventions. ADRs go in `.decisions/`.
+Each skill is self-documenting via its `SKILL.md` file. Invoke them naturally by describing what you want to do.
 
 ## Example Data
 
 This repo includes real data from building these skills:
-- `.issues/events.jsonl` - 45 issues tracking the project
-- `.memory/sessions.jsonl` - 20 sessions of learnings
+- `.issues/events.jsonl` - Issues tracking the project
+- `.memory/sessions.jsonl` - Sessions of learnings
 - `.decisions/` - Design decisions made along the way
 
 ## Using in Your Project
@@ -52,3 +32,18 @@ cp -r .claude/skills/issues /path/to/your/project/.claude/skills/
 ```
 
 Data directories (`.issues/`, `.memory/`, `.decisions/`) are created automatically on first use.
+
+### Permissions
+
+Add to your project's `.claude/settings.json`:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 .claude/skills/issues/issues.py:*)",
+      "Bash(python3 .claude/skills/sessions/sessions.py:*)"
+    ]
+  }
+}
+```

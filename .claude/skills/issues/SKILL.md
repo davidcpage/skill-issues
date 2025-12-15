@@ -1,15 +1,13 @@
+---
+name: issues
+description: Local-first issue tracking with GitHub Issues semantics. Create, close, and query issues with dependencies. Use when managing project work items, tracking bugs/features/tasks, or reviewing what needs to be done.
+---
+
 # Issue Tracking Skill
 
 A minimal, append-only event log for tracking issues. Designed for close human-AI collaboration.
 
 **Portable:** This skill directory contains both documentation and tooling. Copy to any repo to use.
-
-## Permissions
-
-Add to `.claude/settings.json`:
-```json
-{"permissions": {"allow": ["Bash(python3 .claude/skills/issues/issues.py:*)"]}}
-```
 
 ## Tools
 
@@ -23,16 +21,16 @@ Events are stored in `.issues/events.jsonl` (project root) - one JSON event per 
 
 ```bash
 # Reading
-python3 .claude/skills/issues/issues.py              # Open issues (default)
-python3 .claude/skills/issues/issues.py --ready      # Open and not blocked
-python3 .claude/skills/issues/issues.py --all        # All issues including closed
-python3 .claude/skills/issues/issues.py --diagram    # Mermaid dependency diagram
-python3 .claude/skills/issues/issues.py --diagram ascii  # ASCII dependency diagram
+python3 issues.py              # Open issues (default)
+python3 issues.py --ready      # Open and not blocked
+python3 issues.py --all        # All issues including closed
+python3 issues.py --diagram    # Mermaid dependency diagram
+python3 issues.py --diagram ascii  # ASCII dependency diagram
 
 # Writing
-python3 .claude/skills/issues/issues.py --create "Title" [options]
-python3 .claude/skills/issues/issues.py --close ID "Reason"
-python3 .claude/skills/issues/issues.py --note ID "Content"
+python3 issues.py --create "Title" [options]
+python3 issues.py --close ID "Reason"
+python3 issues.py --note ID "Content"
 ```
 
 **Why append-only?**
@@ -80,13 +78,13 @@ Four event types:
 
 ```bash
 # Open issues (default)
-python3 .claude/skills/issues/issues.py
+python3 issues.py
 
 # Ready issues (open and not blocked by other open issues)
-python3 .claude/skills/issues/issues.py --ready
+python3 issues.py --ready
 
 # All issues including closed
-python3 .claude/skills/issues/issues.py --all
+python3 issues.py --all
 ```
 
 Output is JSON array sorted by priority, then ID.
@@ -94,7 +92,7 @@ Output is JSON array sorted by priority, then ID.
 ## Creating Issues
 
 ```bash
-python3 .claude/skills/issues/issues.py --create "Title" [options]
+python3 issues.py --create "Title" [options]
 ```
 
 **Options:**
@@ -107,14 +105,14 @@ python3 .claude/skills/issues/issues.py --create "Title" [options]
 **Examples:**
 ```bash
 # Simple task
-python3 .claude/skills/issues/issues.py --create "Fix login timeout"
+python3 issues.py --create "Fix login timeout"
 
 # Bug with details
-python3 .claude/skills/issues/issues.py --create "API returns 500 on empty input" \
+python3 issues.py --create "API returns 500 on empty input" \
   -t bug -p 1 -d "Discovered when testing edge cases"
 
 # Feature blocked by other work
-python3 .claude/skills/issues/issues.py --create "Add export to CSV" \
+python3 issues.py --create "Add export to CSV" \
   -t feature -b 014,015 -l "needs-review"
 ```
 
@@ -123,12 +121,12 @@ Returns `{"created": "036"}` with the new issue ID.
 ## Adding Notes
 
 ```bash
-python3 .claude/skills/issues/issues.py --note ID "Content"
+python3 issues.py --note ID "Content"
 ```
 
 **Example:**
 ```bash
-python3 .claude/skills/issues/issues.py --note 015 "User clarified: they want CSV format, not JSON"
+python3 issues.py --note 015 "User clarified: they want CSV format, not JSON"
 ```
 
 **When to add notes:**
@@ -157,12 +155,12 @@ Use the Edit tool to append an updated event to `.issues/events.jsonl`:
 ## Closing Issues
 
 ```bash
-python3 .claude/skills/issues/issues.py --close ID "Reason"
+python3 issues.py --close ID "Reason"
 ```
 
 **Example:**
 ```bash
-python3 .claude/skills/issues/issues.py --close 015 "Done - implemented CSV export with unicode support"
+python3 issues.py --close 015 "Done - implemented CSV export with unicode support"
 ```
 
 Returns `{"closed": "015"}` on success.
@@ -173,7 +171,7 @@ Returns `{"closed": "015"}` on success.
 
 1. **Session start**: Check ready work
    ```bash
-   python3 .claude/skills/issues/issues.py --ready
+   python3 issues.py --ready
    ```
 
 2. **Pick work**: Choose from ready issues based on priority
@@ -205,13 +203,13 @@ Generate visual diagrams showing issue relationships:
 
 ```bash
 # Mermaid format (default) - for GitHub READMEs
-python3 .claude/skills/issues/issues.py --diagram
+python3 issues.py --diagram
 
 # ASCII format - for terminal/plain text
-python3 .claude/skills/issues/issues.py --diagram ascii
+python3 issues.py --diagram ascii
 
 # Include closed issues to see full project history
-python3 .claude/skills/issues/issues.py --diagram --include-closed
+python3 issues.py --diagram --include-closed
 ```
 
 **Mermaid output** renders in GitHub markdown:

@@ -1,15 +1,13 @@
+---
+name: sessions
+description: Session memory for tracking learnings, open questions, and next actions across conversations. Use when starting a session, capturing insights, or reviewing what was learned previously.
+---
+
 # Sessions Skill
 
 Personal session memory for AI agent conversations. Captures learnings, open questions, and next actions across sessions.
 
 **Portable:** This skill directory can be copied to any repo. Data lives in `.memory/sessions.jsonl` (project root).
-
-## Permissions
-
-Add to `.claude/settings.json`:
-```json
-{"permissions": {"allow": ["Bash(python3 .claude/skills/sessions/sessions.py:*)"]}}
-```
 
 **Dependency:** This skill references the [issues skill](../issues/SKILL.md) via the `issues_worked` field. Issues do not reference sessions (one-way dependency). See `.decisions/001-sessions-vs-issues.md` for rationale.
 
@@ -64,34 +62,34 @@ Sessions are stored in `.memory/sessions.jsonl` (project root) - one JSON object
 
 ```bash
 # Last session (default - most common for session startup)
-python3 .claude/skills/sessions/sessions.py
+python3 sessions.py
 
 # Last N sessions
-python3 .claude/skills/sessions/sessions.py --last 3
+python3 sessions.py --last 3
 
 # All sessions
-python3 .claude/skills/sessions/sessions.py --all
+python3 sessions.py --all
 
 # All open questions across sessions
-python3 .claude/skills/sessions/sessions.py --open-questions
+python3 sessions.py --open-questions
 
 # All next actions (with session attribution)
-python3 .claude/skills/sessions/sessions.py --next-actions
+python3 sessions.py --next-actions
 
 # Search by topic
-python3 .claude/skills/sessions/sessions.py --topic beads
+python3 sessions.py --topic beads
 
 # Find sessions that worked on a specific issue
-python3 .claude/skills/sessions/sessions.py --issue 014
+python3 sessions.py --issue 014
 
 # Generate markdown summary for documentation
-python3 .claude/skills/sessions/sessions.py --summary
+python3 sessions.py --summary
 
 # Generate markdown timeline of sessions
-python3 .claude/skills/sessions/sessions.py --timeline
+python3 sessions.py --timeline
 
 # Show help
-python3 .claude/skills/sessions/sessions.py --help
+python3 sessions.py --help
 ```
 
 **Note:** `--recent` is accepted as an alias for `--last`. Unknown flags produce a warning.
@@ -102,10 +100,10 @@ Generate formatted markdown for READMEs and documentation:
 
 ```bash
 # Full summary with overview, timeline, key learnings, and open questions
-python3 .claude/skills/sessions/sessions.py --summary
+python3 sessions.py --summary
 
 # Timeline grouped by date with session stats
-python3 .claude/skills/sessions/sessions.py --timeline
+python3 sessions.py --timeline
 ```
 
 **Summary includes:**
@@ -122,10 +120,10 @@ python3 .claude/skills/sessions/sessions.py --timeline
 
 ```bash
 # Basic session with topic only
-python3 .claude/skills/sessions/sessions.py --create "topic-slug"
+python3 sessions.py --create "topic-slug"
 
 # Full session with all fields
-python3 .claude/skills/sessions/sessions.py --create "feature-implementation" \
+python3 sessions.py --create "feature-implementation" \
   -l "First learning" \
   -l "Second learning" \
   -q "Open question to explore" \
@@ -148,7 +146,7 @@ The command auto-generates the session ID and sets today's date.
 User triggers with phrases like "load context", "what's the status", "last session", "where were we".
 
 ```bash
-python3 .claude/skills/sessions/sessions.py
+python3 sessions.py
 ```
 
 Review learnings, open questions, and next actions from last session.
