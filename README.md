@@ -49,6 +49,26 @@ cp -r skill-issues/.claude/skills/adr /path/to/your/project/.claude/skills/
 
 Fork this repo and use it as a starting point. The example data shows the skills in action.
 
+### Option 3: Symlink for updateable skills
+
+If you want to receive updates as the skills evolve, symlink to a local clone:
+
+```bash
+# Clone skill-issues somewhere permanent
+git clone https://github.com/YOUR_USERNAME/skill-issues.git ~/tools/skill-issues
+
+# In your project, create symlinks
+mkdir -p .claude/skills
+ln -s ~/tools/skill-issues/.claude/skills/issues .claude/skills/issues
+ln -s ~/tools/skill-issues/.claude/skills/sessions .claude/skills/sessions
+ln -s ~/tools/skill-issues/.claude/skills/adr .claude/skills/adr
+
+# Exclude from your project's git
+echo ".claude/skills/" >> .gitignore
+```
+
+To update, just `git pull` in your skill-issues clone. Data directories (`.issues/`, `.memory/`, `.decisions/`) remain local to each project.
+
 ## Usage
 
 These skills are designed for natural conversation with Claude Code. Just describe what you want - Claude handles the tooling.
