@@ -24,8 +24,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 # Data file lives in project root, not with the skill
-# Resolve project root from script location (.claude/skills/issues/ -> 3 levels up)
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+# Use current working directory so symlinked skills write to the correct repo
+PROJECT_ROOT = Path.cwd()
 EVENTS_FILE = PROJECT_ROOT / ".issues/events.jsonl"
 
 

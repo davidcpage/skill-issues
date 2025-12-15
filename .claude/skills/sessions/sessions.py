@@ -22,8 +22,8 @@ from datetime import date
 from pathlib import Path
 
 # Data file lives in project root, not with the skill
-# Resolve project root from script location (.claude/skills/sessions/ -> 3 levels up)
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+# Use current working directory so symlinked skills write to the correct repo
+PROJECT_ROOT = Path.cwd()
 SESSIONS_FILE = PROJECT_ROOT / ".memory/sessions.jsonl"
 
 
