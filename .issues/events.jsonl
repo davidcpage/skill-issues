@@ -100,3 +100,6 @@
 {"ts":"2025-12-15T10:44:35Z","type":"closed","id":"031","reason":"Done - repo published to GitHub"}
 {"ts":"2025-12-15T10:46:04Z","type":"created","id":"049","title":"Mermaid diagram renders too wide with many issues","issue_type":"bug","priority":2,"description":"When using --diagram --include-closed with many issues (48+), the flowchart TD layout places most independent nodes in a single row, making it unreadably small when rendered. Need to investigate better layout options (LR direction, subgraphs, or limiting displayed issues)."}
 {"ts":"2025-12-15T10:47:49Z","type":"closed","id":"049","reason":"Done - changed from flowchart TD to flowchart LR for vertical scrolling instead of horizontal"}
+{"ts":"2025-12-15T11:05:26Z","type":"updated","id":"045","blocked_by":["044"],"reason":"Added blockers: 044"}
+{"ts":"2025-12-15T11:05:34Z","type":"updated","id":"045","blocked_by":[],"reason":"Removed blockers: 044"}
+{"ts":"2025-12-15T11:06:31Z","type":"closed","id":"045","reason":"Done - implemented --block and --unblock CLI commands with validation and update tracking"}

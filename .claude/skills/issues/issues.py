@@ -3,7 +3,7 @@
 Append-only issue tracker tool.
 
 Reads events.jsonl, reconstructs issue state, outputs filtered JSON.
-Also supports writing events via --create, --close, and --note commands.
+Also supports writing events via --create, --close, --note, --block, and --unblock commands.
 
 Usage:
     python3 .claude/skills/issues/issues.py              # Open issues (default)
@@ -13,6 +13,8 @@ Usage:
     python3 .claude/skills/issues/issues.py --create "Title" [options]
     python3 .claude/skills/issues/issues.py --close ID "Reason"
     python3 .claude/skills/issues/issues.py --note ID "Content"
+    python3 .claude/skills/issues/issues.py --block ID "BLOCKER_IDS"
+    python3 .claude/skills/issues/issues.py --unblock ID "BLOCKER_IDS"
 """
 
 import argparse
@@ -191,6 +193,71 @@ def add_note(issue_id, content):
     }
 
     append_event(event)
+
+
+def block_issue(issue_id, blocker_ids):
+    """Add blockers to an issue."""
+    issues = load_issues()
+
+    if issue_id not in issues:
+        raise ValueError(f"Issue {issue_id} not found")
+    if issues[issue_id]["status"] == "closed":
+        raise ValueError(f"Issue {issue_id} is already closed")
+
+    # Validate blocker IDs exist
+    for bid in blocker_ids:
+        if bid not in issues:
+            raise ValueError(f"Blocker issue {bid} not found")
+
+    current_blockers = set(issues[issue_id].get("blocked_by", []))
+    new_blockers = set(blocker_ids)
+    added = new_blockers - current_blockers
+
+    if not added:
+        raise ValueError(f"Issue {issue_id} is already blocked by {blocker_ids}")
+
+    updated_blockers = sorted(current_blockers | new_blockers)
+
+    event = {
+        "ts": get_timestamp(),
+        "type": "updated",
+        "id": issue_id,
+        "blocked_by": updated_blockers,
+        "reason": f"Added blockers: {', '.join(sorted(added))}",
+    }
+
+    append_event(event)
+    return sorted(added)
+
+
+def unblock_issue(issue_id, blocker_ids):
+    """Remove blockers from an issue."""
+    issues = load_issues()
+
+    if issue_id not in issues:
+        raise ValueError(f"Issue {issue_id} not found")
+    if issues[issue_id]["status"] == "closed":
+        raise ValueError(f"Issue {issue_id} is already closed")
+
+    current_blockers = set(issues[issue_id].get("blocked_by", []))
+    to_remove = set(blocker_ids)
+    removed = to_remove & current_blockers
+
+    if not removed:
+        raise ValueError(f"Issue {issue_id} is not blocked by any of {blocker_ids}")
+
+    updated_blockers = sorted(current_blockers - to_remove)
+
+    event = {
+        "ts": get_timestamp(),
+        "type": "updated",
+        "id": issue_id,
+        "blocked_by": updated_blockers,
+        "reason": f"Removed blockers: {', '.join(sorted(removed))}",
+    }
+
+    append_event(event)
+    return sorted(removed)
 
 
 def parse_list_arg(value):
@@ -375,6 +442,8 @@ def main():
     parser.add_argument("--create", metavar="TITLE", help="Create a new issue with the given title")
     parser.add_argument("--close", nargs=2, metavar=("ID", "REASON"), help="Close an issue")
     parser.add_argument("--note", nargs=2, metavar=("ID", "CONTENT"), help="Add a note to an issue")
+    parser.add_argument("--block", nargs=2, metavar=("ID", "BLOCKER_IDS"), help="Add blockers to an issue (comma-separated IDs)")
+    parser.add_argument("--unblock", nargs=2, metavar=("ID", "BLOCKER_IDS"), help="Remove blockers from an issue (comma-separated IDs)")
 
     # Diagram options
     parser.add_argument("--include-closed", action="store_true",
@@ -421,6 +490,34 @@ def main():
         try:
             add_note(issue_id, content)
             print(json.dumps({"noted": issue_id}))
+        except ValueError as e:
+            print(json.dumps({"error": str(e)}), file=sys.stderr)
+            sys.exit(1)
+        return
+
+    if args.block:
+        issue_id, blocker_ids_str = args.block
+        blocker_ids = parse_list_arg(blocker_ids_str)
+        if not blocker_ids:
+            print(json.dumps({"error": "No blocker IDs provided"}), file=sys.stderr)
+            sys.exit(1)
+        try:
+            added = block_issue(issue_id, blocker_ids)
+            print(json.dumps({"blocked": issue_id, "added": added}))
+        except ValueError as e:
+            print(json.dumps({"error": str(e)}), file=sys.stderr)
+            sys.exit(1)
+        return
+
+    if args.unblock:
+        issue_id, blocker_ids_str = args.unblock
+        blocker_ids = parse_list_arg(blocker_ids_str)
+        if not blocker_ids:
+            print(json.dumps({"error": "No blocker IDs provided"}), file=sys.stderr)
+            sys.exit(1)
+        try:
+            removed = unblock_issue(issue_id, blocker_ids)
+            print(json.dumps({"unblocked": issue_id, "removed": removed}))
         except ValueError as e:
             print(json.dumps({"error": str(e)}), file=sys.stderr)
             sys.exit(1)

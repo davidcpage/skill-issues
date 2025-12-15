@@ -31,6 +31,8 @@ python3 issues.py --diagram ascii  # ASCII dependency diagram
 python3 issues.py --create "Title" [options]
 python3 issues.py --close ID "Reason"
 python3 issues.py --note ID "Content"
+python3 issues.py --block ID "BLOCKER_IDS"
+python3 issues.py --unblock ID "BLOCKER_IDS"
 ```
 
 **Why append-only?**
@@ -137,9 +139,25 @@ python3 issues.py --note 015 "User clarified: they want CSV format, not JSON"
 
 Notes appear in the issue's `notes` array when reading issues.
 
-## Updating Issues
+## Updating Dependencies
 
-Use the Edit tool to append an updated event to `.issues/events.jsonl`:
+Add or remove blockers from existing issues:
+
+```bash
+# Add blockers (comma-separated IDs)
+python3 issues.py --block 014 "012,013"
+
+# Remove blockers
+python3 issues.py --unblock 014 "012"
+```
+
+Returns `{"blocked": "014", "added": ["012", "013"]}` or `{"unblocked": "014", "removed": ["012"]}`.
+
+**Error handling:** Returns error JSON to stderr if issue doesn't exist, is already closed, or blocker IDs are invalid.
+
+## Other Updates
+
+For other mutable fields (`priority`, `labels`), use the Edit tool to append an updated event to `.issues/events.jsonl`:
 
 ```json
 {"ts": "2025-12-13T14:15:00Z", "type": "updated", "id": "014", "priority": 1, "reason": "Blocking other work, needs to be done first"}
@@ -147,7 +165,7 @@ Use the Edit tool to append an updated event to `.issues/events.jsonl`:
 
 **Mutable fields:**
 - `priority` - reprioritize as understanding evolves
-- `blocked_by` - add or change dependencies
+- `blocked_by` - add or change dependencies (prefer `--block`/`--unblock` commands)
 - `labels` - add or change custom tags
 
 **Always include `reason`** to explain why the change was made. Updates appear in the issue's `updates` array with before/after values for traceability.
