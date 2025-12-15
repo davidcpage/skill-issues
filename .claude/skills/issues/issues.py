@@ -202,7 +202,9 @@ def parse_list_arg(value):
 
 def generate_mermaid_diagram(issues, all_issues, include_closed=False):
     """Generate Mermaid flowchart showing issue dependencies."""
-    lines = ["flowchart TD"]
+    # LR (left-right) produces vertically-scrollable diagrams, better than
+    # TD which creates very wide diagrams with many independent nodes
+    lines = ["flowchart LR"]
 
     # Determine which issues to include
     if include_closed:
@@ -211,7 +213,7 @@ def generate_mermaid_diagram(issues, all_issues, include_closed=False):
         display_issues = {k: v for k, v in all_issues.items() if v["status"] == "open"}
 
     if not display_issues:
-        return "flowchart TD\n    empty[No issues to display]"
+        return "flowchart LR\n    empty[No issues to display]"
 
     open_ids = set(k for k, v in all_issues.items() if v["status"] == "open")
 

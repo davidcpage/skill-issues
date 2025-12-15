@@ -213,6 +213,7 @@ python3 issues.py --diagram --include-closed
 ```
 
 **Mermaid output** renders in GitHub markdown:
+- Uses left-right layout for vertical scrolling (better than wide horizontal diagrams)
 - Rectangle nodes = open issues
 - Stadium (rounded) nodes = closed issues
 - Arrows show blocked-by relationships (blocker → blocked)
