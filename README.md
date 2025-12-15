@@ -34,54 +34,102 @@ Fork this repo and use it as a starting point. The example data shows the skills
 
 ## Usage
 
+These skills are designed for natural conversation with Claude Code. Just describe what you want - Claude handles the tooling.
+
 ### Issues
 
-```bash
-# View ready (unblocked) issues
-python3 .claude/skills/issues/issues.py --ready
+**Starting a session:**
+> "What issues are ready to work on?"
 
-# Create an issue
-python3 .claude/skills/issues/issues.py --create "Add dark mode" \
-  --type feature --priority 2 --description "User requested dark theme"
+```json
+[
+  {
+    "id": "050",
+    "title": "Refocus README on skill usage with examples",
+    "type": "task",
+    "priority": 2,
+    "status": "open",
+    "blocked_by": []
+  }
+]
+```
 
-# Close an issue
-python3 .claude/skills/issues/issues.py --close 001 "Implemented in commit abc123"
+**Creating issues:**
+> "Create an issue for the login timeout bug - it's high priority"
 
-# Add a note
-python3 .claude/skills/issues/issues.py --note 001 "Blocked on design review"
+```json
+{"created": "051"}
+```
 
-# View dependency diagram
-python3 .claude/skills/issues/issues.py --diagram
+**During work:**
+> "Add a note to issue 051 - discovered it only happens with expired sessions"
+
+> "Close issue 051 - fixed by refreshing auth tokens before API calls"
+
+**Visualizing dependencies:**
+> "Show me the issue dependency diagram"
+
+```mermaid
+flowchart LR
+    050["050: Refocus README..."]
+    051["051: Login timeout"] --> 050
+    style 050 fill:#87CEEB
 ```
 
 ### Sessions
 
-```bash
-# View last session
-python3 .claude/skills/sessions/sessions.py
+**Resuming context:**
+> "What did we work on last session?"
 
-# View all open questions
-python3 .claude/skills/sessions/sessions.py --open-questions
-
-# Create a session summary
-python3 .claude/skills/sessions/sessions.py --create "auth-refactor" \
-  -l "JWT tokens work better than sessions for our API" \
-  -l "Need to handle token refresh on 401" \
-  -q "Should we use refresh tokens or short-lived access tokens?" \
-  -a "Implement token refresh logic" \
-  -i "012,015"
+```json
+{
+  "id": "s027",
+  "date": "2025-12-15",
+  "topic": "block-unblock-commands",
+  "learnings": [
+    "Post-hoc dependency modification is a reasonable escape hatch",
+    "Two explicit commands are cleaner than one that replaces the whole list"
+  ],
+  "issues_worked": ["045"]
+}
 ```
+
+**Finding open threads:**
+> "What open questions do we have?"
+
+```json
+[
+  "How well does this scale with multiple concurrent agents?",
+  "Should notes support optional session field for tracking context?",
+  "What's the best repo structure for publishing skill bundles?"
+]
+```
+
+**Ending a session:**
+> "Let's wrap up - we learned that Mermaid LR layout works better for tall diagrams"
+
+Claude creates a session entry capturing learnings, open questions, and issues worked.
 
 ### ADRs
 
-Create markdown files in `.decisions/` following the template in `.claude/skills/adr/SKILL.md`.
+**When facing a design choice:**
+> "We need to decide between SQLite and JSONL for storage - let's write up an ADR"
+
+Claude creates a decision record in `.decisions/` capturing context, options, and rationale:
 
 ```
 .decisions/
-├── 001-database-choice.md
-├── 002-api-versioning.md
-└── 003-auth-strategy.md
+├── 001-sessions-vs-issues.md
+├── 002-github-issues-compatibility.md
+└── 003-design-doc-process.md
 ```
+
+### CLI Access
+
+The Python scripts are also available for direct use. See the SKILL.md files for full CLI documentation:
+- `.claude/skills/issues/SKILL.md`
+- `.claude/skills/sessions/SKILL.md`
+- `.claude/skills/adr/SKILL.md`
 
 ## Dogfooding
 

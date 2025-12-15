@@ -103,3 +103,5 @@
 {"ts":"2025-12-15T11:05:26Z","type":"updated","id":"045","blocked_by":["044"],"reason":"Added blockers: 044"}
 {"ts":"2025-12-15T11:05:34Z","type":"updated","id":"045","blocked_by":[],"reason":"Removed blockers: 044"}
 {"ts":"2025-12-15T11:06:31Z","type":"closed","id":"045","reason":"Done - implemented --block and --unblock CLI commands with validation and update tracking"}
+{"ts":"2025-12-15T11:10:22Z","type":"created","id":"050","title":"Refocus README on skill usage with examples","issue_type":"task","priority":2,"description":"The README currently focuses on usage of the Python scripts bundled with the skills rather than the skills themselves. Script usage is already documented in SKILL.md files. Should refocus on demonstrating skill usage with typical examples - compose demos based on real skill outputs to show how the skills work in practice."}
+{"ts":"2025-12-15T11:13:20Z","type":"closed","id":"050","reason":"Done - refocused README on natural skill usage with conversation examples rather than CLI commands"}
