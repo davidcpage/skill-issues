@@ -2,6 +2,8 @@
 
 Lightweight, local-first skills for Claude Code.
 
+![Screenshot of Claude Code invoking the issues skill with the prompt "What have we got to work on next?"](skill-issues.png)
+
 ## What's Inside
 
 Three tools designed for AI coding agents, stored as simple files in your repo:
