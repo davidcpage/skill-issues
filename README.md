@@ -6,7 +6,7 @@ Lightweight, local-first skills for Claude Code.
 
 ## What's Inside
 
-Three tools designed for AI coding agents, stored as simple files in your repo:
+Three tools designed for AI coding agents, with all data stored as simple files in your repo:
 
 | Skill | What it does |
 |-------|--------------|
