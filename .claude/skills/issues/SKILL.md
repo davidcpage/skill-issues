@@ -37,7 +37,7 @@ issues --note ID "Content"
 issues --block ID "BLOCKER_IDS"
 issues --unblock ID "BLOCKER_IDS"
 
-# TUI (coming soon)
+# TUI
 issues board              # Kanban board view
 ```
 
@@ -255,6 +255,31 @@ issues --diagram --include-closed
 - `(BLOCKED)` = open, waiting on other open issues
 - `{CLOSED}` = completed
 - Indented lines show what blocks each issue
+
+## Interactive Board TUI
+
+Browse issues interactively with a Kanban board interface:
+
+```bash
+issues board
+```
+
+**Columns:**
+- **Ready**: Open issues with no open blockers
+- **Blocked**: Open issues waiting on other open issues
+- **Closed**: Completed issues
+
+**Features:**
+- Issue cards show priority badge, type icon, ID, and title
+- Right panel shows full issue details (description, labels, blockers, notes)
+- Issues sorted by priority within each column
+
+**Vim Navigation:**
+- `h`/`l` - Move between columns
+- `j`/`k` - Move between issues in current column
+- `g`/`G` - Jump to top/bottom of column
+- `r` - Refresh issues from disk
+- `q` - Quit
 
 ## Dependency Reasoning
 

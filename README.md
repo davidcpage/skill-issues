@@ -33,41 +33,69 @@ issues (standalone)
 
 ## Quick Start
 
-### Option 1: Copy skills to your project
+### 1. Install CLI tools
+
+```bash
+# Install globally with uv (recommended)
+uv tool install skill-issues
+
+# Or with pipx
+pipx install skill-issues
+```
+
+This provides global `issues` and `sessions` commands that work in any directory.
+
+### 2. Register skills with Claude Code
+
+Copy skill definitions to your project so Claude Code recognizes them:
 
 ```bash
 # Clone this repo
 git clone https://github.com/davidcpage/skill-issues.git
 
-# Copy skills to your project
+# Copy skill definitions (SKILL.md files)
+mkdir -p /path/to/your/project/.claude/skills
 cp -r skill-issues/.claude/skills/issues /path/to/your/project/.claude/skills/
 cp -r skill-issues/.claude/skills/sessions /path/to/your/project/.claude/skills/
 cp -r skill-issues/.claude/skills/adr /path/to/your/project/.claude/skills/
 ```
 
-### Option 2: Use as template
+### 3. Add permissions
 
-Fork this repo and use it as a starting point. The example data shows the skills in action.
+In your project's `.claude/settings.json`:
 
-### Option 3: Symlink for updateable skills
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(issues:*)",
+      "Bash(sessions:*)"
+    ]
+  }
+}
+```
 
-If you want to receive updates as the skills evolve, symlink to a local clone:
+Data directories (`.issues/`, `.memory/`, `.decisions/`) are created automatically on first use.
+
+### Alternative: Symlink for updates
+
+If you want automatic updates as skills evolve:
 
 ```bash
-# Clone skill-issues somewhere permanent
+# Clone somewhere permanent
 git clone https://github.com/davidcpage/skill-issues.git ~/tools/skill-issues
 
-# In your project, create symlinks
+# Symlink in your project
 mkdir -p .claude/skills
 ln -s ~/tools/skill-issues/.claude/skills/issues .claude/skills/issues
 ln -s ~/tools/skill-issues/.claude/skills/sessions .claude/skills/sessions
 ln -s ~/tools/skill-issues/.claude/skills/adr .claude/skills/adr
 
-# Exclude from your project's git
+# Exclude from git
 echo ".claude/skills/" >> .gitignore
 ```
 
-To update, just `git pull` in your skill-issues clone. Data directories (`.issues/`, `.memory/`, `.decisions/`) remain local to each project.
+To update: `git pull` in your skill-issues clone.
 
 ## Usage
 
@@ -145,9 +173,60 @@ Claude creates a decision record in `.decisions/` capturing context, options, an
 └── 003-design-doc-process.md
 ```
 
-### CLI Access
+### CLI Tools
 
-The Python scripts are also available for direct use. See the SKILL.md files for full CLI documentation:
+Install global CLI tools for direct command-line access:
+
+```bash
+# Install with uv (recommended)
+uv tool install skill-issues
+
+# Or with pipx
+pipx install skill-issues
+```
+
+This provides `issues` and `sessions` commands that work in any project directory.
+
+**Issues CLI:**
+```bash
+issues                    # Open issues (default)
+issues --ready            # Open and not blocked
+issues --closed           # Closed issues
+issues 053                # Show single issue
+issues --create "Title"   # Create new issue
+issues --close ID "Reason" # Close issue
+issues --diagram          # Dependency diagram
+issues board              # Interactive Kanban TUI
+```
+
+**Sessions CLI:**
+```bash
+sessions                  # Last session
+sessions --last 3         # Last N sessions
+sessions --open-questions # All open questions
+sessions --create "topic" # Create session
+sessions view             # Interactive TUI browser
+```
+
+**TUI Interfaces:**
+
+`issues board` - Kanban board with Ready/Blocked/Closed columns, vim navigation (h/l/j/k), details panel.
+
+`sessions view` - Session browser with date list, search filter (/), full session details.
+
+**Add CLI permissions** to your project's `.claude/settings.json`:
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(issues:*)",
+      "Bash(sessions:*)"
+    ]
+  }
+}
+```
+
+For full CLI documentation, see:
 - `.claude/skills/issues/SKILL.md`
 - `.claude/skills/sessions/SKILL.md`
 - `.claude/skills/adr/SKILL.md`

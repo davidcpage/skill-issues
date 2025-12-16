@@ -21,6 +21,10 @@ def main() -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
+    # Subcommands
+    subparsers = parser.add_subparsers(dest="subcommand")
+    subparsers.add_parser("board", help="Open interactive Kanban board TUI")
+
     # Positional argument for issue ID (implicit --show)
     parser.add_argument("issue_id", nargs="?", metavar="ID", help="Issue ID to show (shorthand for --show)")
 
@@ -55,6 +59,12 @@ def main() -> int:
     parser.add_argument("--labels", "-l", default="", help="Comma-separated list of labels")
 
     args = parser.parse_args()
+
+    # Handle subcommands
+    if args.subcommand == "board":
+        from . import tui
+        tui.run_app()
+        return 0
 
     # Handle write commands
     if args.create:

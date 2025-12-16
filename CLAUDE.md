@@ -35,7 +35,7 @@ This provides global `issues` and `sessions` commands that work in any project d
 - `issues --open` / `issues --ready` / `issues --closed` - Query issues
 - `issues --create "Title"` / `issues --close ID "Reason"` - Manage issues
 - `issues --diagram` - Visualize dependencies
-- `issues board` - Kanban TUI (coming soon)
+- `issues board` - Interactive Kanban TUI
 
 **Sessions CLI:**
 - `sessions` - Show last session
