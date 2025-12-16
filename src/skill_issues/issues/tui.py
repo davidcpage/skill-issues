@@ -8,6 +8,12 @@ from textual.widgets import Footer, Header, Static
 from . import store
 
 
+class NonFocusableScrollableContainer(ScrollableContainer):
+    """ScrollableContainer that cannot receive focus."""
+
+    can_focus = False
+
+
 # Priority badges with colors
 PRIORITY_BADGES = {
     0: ("[bold red]P0[/]", "critical"),
@@ -76,7 +82,7 @@ class KanbanColumn(Vertical):
 
     def compose(self) -> ComposeResult:
         yield Static(f"[bold]{self.column_title}[/] ({len(self.issues)})", classes="column-header")
-        with ScrollableContainer(classes="column-content"):
+        with NonFocusableScrollableContainer(classes="column-content"):
             for issue in self.issues:
                 yield IssueCard(issue)
 
