@@ -19,19 +19,29 @@ This repo includes real data from building these skills:
 - `.memory/sessions.jsonl` - Sessions of learnings
 - `.decisions/` - Design decisions made along the way
 
-## Using in Your Project
+## Installation
 
-Copy the skills you want to your project:
+Install the `skill-issues` package to get the CLI tools:
 
 ```bash
-# Copy all skills
-cp -r .claude/skills/issues .claude/skills/sessions .claude/skills/adr /path/to/your/project/.claude/skills/
-
-# Or just the ones you need
-cp -r .claude/skills/issues /path/to/your/project/.claude/skills/
+uv tool install skill-issues
 ```
 
-Data directories (`.issues/`, `.memory/`, `.decisions/`) are created automatically on first use.
+This provides global `issues` and `sessions` commands that work in any project directory.
+
+### Features
+
+**Issues CLI:**
+- `issues --open` / `issues --ready` / `issues --closed` - Query issues
+- `issues --create "Title"` / `issues --close ID "Reason"` - Manage issues
+- `issues --diagram` - Visualize dependencies
+- `issues board` - Kanban TUI (coming soon)
+
+**Sessions CLI:**
+- `sessions` - Show last session
+- `sessions --last 3` / `sessions --topic keyword` - Query sessions
+- `sessions --create "topic"` - Create session
+- `sessions view` - Interactive TUI browser
 
 ### Permissions
 
@@ -41,9 +51,32 @@ Add to your project's `.claude/settings.json`:
 {
   "permissions": {
     "allow": [
-      "Bash(python3 .claude/skills/issues/issues.py:*)",
-      "Bash(python3 .claude/skills/sessions/sessions.py:*)"
+      "Bash(issues:*)",
+      "Bash(sessions:*)"
     ]
   }
 }
+```
+
+### Using Skills in Other Projects
+
+Copy the skill directories to register the skills with Claude Code:
+
+```bash
+# Copy skill definitions (SKILL.md files only)
+cp -r .claude/skills/issues .claude/skills/sessions .claude/skills/adr /path/to/your/project/.claude/skills/
+```
+
+The CLI tools are installed globally via `uv tool install`, so they work in any project once installed.
+
+Data directories (`.issues/`, `.memory/`, `.decisions/`) are created automatically on first use.
+
+## Development Note
+
+When developing locally, `uv tool install` caches built packages. If changes aren't reflected after reinstall:
+
+```bash
+uv tool uninstall skill-issues
+uv cache clean
+uv tool install .
 ```

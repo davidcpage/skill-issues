@@ -1,0 +1,165 @@
+"""CLI entry point for issues command."""
+
+import argparse
+import json
+import sys
+
+from . import store
+
+
+def parse_list_arg(value: str) -> list[str] | None:
+    """Parse comma-separated list argument."""
+    if not value:
+        return None
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def main() -> int:
+    """Entry point for the issues command."""
+    parser = argparse.ArgumentParser(
+        description="Append-only issue tracker",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+
+    # Positional argument for issue ID (implicit --show)
+    parser.add_argument("issue_id", nargs="?", metavar="ID", help="Issue ID to show (shorthand for --show)")
+
+    # Query flags (mutually exclusive with write commands)
+    query_group = parser.add_mutually_exclusive_group()
+    query_group.add_argument("--all", action="store_true", help="Show all issues including closed")
+    query_group.add_argument("--open", action="store_true", help="Show all open issues (default)")
+    query_group.add_argument("--closed", action="store_true", help="Show closed issues")
+    query_group.add_argument("--ready", action="store_true", help="Show open issues not blocked")
+    query_group.add_argument("--show", metavar="ID", help="Show details of a single issue")
+    query_group.add_argument("--diagram", nargs="?", const="mermaid", choices=["mermaid", "ascii"],
+                             metavar="FORMAT", help="Generate dependency diagram (mermaid or ascii, default: mermaid)")
+
+    # Write commands
+    parser.add_argument("--create", metavar="TITLE", help="Create a new issue with the given title")
+    parser.add_argument("--close", nargs=2, metavar=("ID", "REASON"), help="Close an issue")
+    parser.add_argument("--note", nargs=2, metavar=("ID", "CONTENT"), help="Add a note to an issue")
+    parser.add_argument("--block", nargs=2, metavar=("ID", "BLOCKER_IDS"), help="Add blockers to an issue (comma-separated IDs)")
+    parser.add_argument("--unblock", nargs=2, metavar=("ID", "BLOCKER_IDS"), help="Remove blockers from an issue (comma-separated IDs)")
+
+    # Diagram options
+    parser.add_argument("--include-closed", action="store_true",
+                        help="Include closed issues in diagram (only used with --diagram)")
+
+    # Create options
+    parser.add_argument("--type", "-t", choices=["bug", "feature", "task"], default="task",
+                        help="Issue type (default: task)")
+    parser.add_argument("--priority", "-p", type=int, choices=[0, 1, 2, 3, 4], default=2,
+                        help="Priority 0=critical to 4=backlog (default: 2)")
+    parser.add_argument("--description", "-d", default="", help="Issue description")
+    parser.add_argument("--blocked-by", "-b", default="", help="Comma-separated list of blocking issue IDs")
+    parser.add_argument("--labels", "-l", default="", help="Comma-separated list of labels")
+
+    args = parser.parse_args()
+
+    # Handle write commands
+    if args.create:
+        blocked_by = parse_list_arg(args.blocked_by)
+        labels = parse_list_arg(args.labels)
+        try:
+            new_id = store.create_issue(
+                title=args.create,
+                issue_type=args.type,
+                priority=args.priority,
+                description=args.description,
+                blocked_by=blocked_by,
+                labels=labels,
+            )
+            print(json.dumps({"created": new_id}))
+        except Exception as e:
+            print(json.dumps({"error": str(e)}), file=sys.stderr)
+            return 1
+        return 0
+
+    if args.close:
+        issue_id, reason = args.close
+        try:
+            store.close_issue(issue_id, reason)
+            print(json.dumps({"closed": issue_id}))
+        except ValueError as e:
+            print(json.dumps({"error": str(e)}), file=sys.stderr)
+            return 1
+        return 0
+
+    if args.note:
+        issue_id, content = args.note
+        try:
+            store.add_note(issue_id, content)
+            print(json.dumps({"noted": issue_id}))
+        except ValueError as e:
+            print(json.dumps({"error": str(e)}), file=sys.stderr)
+            return 1
+        return 0
+
+    if args.block:
+        issue_id, blocker_ids_str = args.block
+        blocker_ids = parse_list_arg(blocker_ids_str)
+        if not blocker_ids:
+            print(json.dumps({"error": "No blocker IDs provided"}), file=sys.stderr)
+            return 1
+        try:
+            added = store.block_issue(issue_id, blocker_ids)
+            print(json.dumps({"blocked": issue_id, "added": added}))
+        except ValueError as e:
+            print(json.dumps({"error": str(e)}), file=sys.stderr)
+            return 1
+        return 0
+
+    if args.unblock:
+        issue_id, blocker_ids_str = args.unblock
+        blocker_ids = parse_list_arg(blocker_ids_str)
+        if not blocker_ids:
+            print(json.dumps({"error": "No blocker IDs provided"}), file=sys.stderr)
+            return 1
+        try:
+            removed = store.unblock_issue(issue_id, blocker_ids)
+            print(json.dumps({"unblocked": issue_id, "removed": removed}))
+        except ValueError as e:
+            print(json.dumps({"error": str(e)}), file=sys.stderr)
+            return 1
+        return 0
+
+    # Handle query commands
+    all_issues = store.load_issues()
+
+    # Handle --show or positional issue_id (both show a single issue)
+    show_id = args.show or args.issue_id
+    if show_id:
+        if show_id not in all_issues:
+            print(json.dumps({"error": f"Issue {show_id} not found"}), file=sys.stderr)
+            return 1
+        print(json.dumps(all_issues[show_id], indent=2))
+        return 0
+
+    # Handle diagram output
+    if args.diagram:
+        include_closed = getattr(args, 'include_closed', False)
+        if args.diagram == "ascii":
+            print(store.generate_ascii_diagram(all_issues, all_issues, include_closed=include_closed))
+        else:
+            print(store.generate_mermaid_diagram(all_issues, all_issues, include_closed=include_closed))
+        return 0
+
+    if args.all:
+        output = all_issues
+    elif args.closed:
+        output = store.filter_closed(all_issues)
+    elif args.ready:
+        output = store.filter_ready(all_issues, all_issues)
+    else:
+        # Default (no flags or --open): show open issues
+        output = store.filter_open(all_issues)
+
+    # Sort by priority, then by id
+    sorted_issues = sorted(output.values(), key=lambda x: (x.get("priority", 2), x["id"]))
+
+    print(json.dumps(sorted_issues, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

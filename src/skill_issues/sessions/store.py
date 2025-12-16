@@ -1,0 +1,235 @@
+"""
+Sessions store layer - data operations for session memory.
+
+This module handles all data persistence and querying for sessions.
+It can be imported independently of the CLI.
+"""
+
+import json
+from datetime import date
+from pathlib import Path
+from typing import Any
+
+# Data file lives in project root (current working directory)
+PROJECT_ROOT = Path.cwd()
+SESSIONS_FILE = PROJECT_ROOT / ".memory/sessions.jsonl"
+
+
+def ensure_data_file() -> None:
+    """Create data directory and file if missing."""
+    if not SESSIONS_FILE.parent.exists():
+        SESSIONS_FILE.parent.mkdir(parents=True)
+    if not SESSIONS_FILE.exists():
+        SESSIONS_FILE.touch()
+
+
+def load_sessions() -> list[dict[str, Any]]:
+    """Read all sessions from JSONL file."""
+    ensure_data_file()
+
+    sessions = []
+    for line in SESSIONS_FILE.read_text().splitlines():
+        if not line.strip():
+            continue
+        sessions.append(json.loads(line))
+    return sessions
+
+
+def next_session_id(sessions: list[dict[str, Any]]) -> str:
+    """Generate next session ID from existing sessions."""
+    if not sessions:
+        return "s001"
+
+    max_num = 0
+    for s in sessions:
+        sid = s.get("id", "")
+        if sid.startswith("s") and sid[1:].isdigit():
+            max_num = max(max_num, int(sid[1:]))
+
+    return f"s{max_num + 1:03d}"
+
+
+def append_session(session: dict[str, Any]) -> None:
+    """Append a session to the JSONL file."""
+    ensure_data_file()
+
+    content = SESSIONS_FILE.read_text()
+    if content and not content.endswith("\n"):
+        content += "\n"
+
+    line = json.dumps(session, separators=(",", ":"))
+    SESSIONS_FILE.write_text(content + line + "\n")
+
+
+def create_session(
+    topic: str,
+    learnings: list[str] | None = None,
+    open_questions: list[str] | None = None,
+    next_actions: list[str] | None = None,
+    issues_worked: list[str] | None = None,
+) -> dict[str, Any]:
+    """Create a new session entry and return it."""
+    sessions = load_sessions()
+
+    session = {
+        "id": next_session_id(sessions),
+        "date": date.today().isoformat(),
+        "topic": topic,
+        "learnings": learnings or [],
+        "open_questions": open_questions or [],
+        "next_actions": next_actions or [],
+        "issues_worked": issues_worked or [],
+    }
+
+    append_session(session)
+    return session
+
+
+# --- Filter functions ---
+
+def filter_by_issue(sessions: list[dict[str, Any]], issue_id: str) -> list[dict[str, Any]]:
+    """Return sessions that worked on a specific issue."""
+    return [s for s in sessions if issue_id in s.get("issues_worked", [])]
+
+
+def filter_by_topic(sessions: list[dict[str, Any]], keyword: str) -> list[dict[str, Any]]:
+    """Return sessions with topic containing keyword (case-insensitive)."""
+    keyword = keyword.lower()
+    return [s for s in sessions if keyword in s.get("topic", "").lower()]
+
+
+# --- Aggregation functions ---
+
+def aggregate_open_questions(sessions: list[dict[str, Any]]) -> list[str]:
+    """Return unique open questions across all sessions."""
+    questions = []
+    seen: set[str] = set()
+    for s in sessions:
+        for q in s.get("open_questions", []):
+            if q not in seen:
+                questions.append(q)
+                seen.add(q)
+    return questions
+
+
+def aggregate_next_actions(sessions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Return all next actions across all sessions (most recent first)."""
+    actions = []
+    for s in reversed(sessions):
+        for a in s.get("next_actions", []):
+            actions.append({"session": s["id"], "date": s["date"], "action": a})
+    return actions
+
+
+# --- Markdown generation ---
+
+def generate_timeline(sessions: list[dict[str, Any]]) -> str:
+    """Generate markdown timeline of sessions."""
+    if not sessions:
+        return "No sessions recorded yet."
+
+    lines = ["## Session Timeline", ""]
+
+    by_date: dict[str, list[dict[str, Any]]] = {}
+    for s in sessions:
+        d = s.get("date", "unknown")
+        by_date.setdefault(d, []).append(s)
+
+    for d in sorted(by_date.keys(), reverse=True):
+        lines.append(f"### {d}")
+        lines.append("")
+
+        for s in by_date[d]:
+            sid = s.get("id", "?")
+            topic = s.get("topic", "untitled")
+            learnings = len(s.get("learnings", []))
+            questions = len(s.get("open_questions", []))
+            issues = s.get("issues_worked", [])
+
+            stats = []
+            if learnings:
+                stats.append(f"{learnings} learning{'s' if learnings != 1 else ''}")
+            if questions:
+                stats.append(f"{questions} question{'s' if questions != 1 else ''}")
+            if issues:
+                stats.append(f"{len(issues)} issue{'s' if len(issues) != 1 else ''}")
+
+            stat_str = f" ({', '.join(stats)})" if stats else ""
+            lines.append(f"- **{sid}** {topic}{stat_str}")
+
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def generate_summary(sessions: list[dict[str, Any]]) -> str:
+    """Generate comprehensive markdown summary for documentation."""
+    if not sessions:
+        return "No sessions recorded yet."
+
+    lines = ["## Project Session Summary", ""]
+
+    dates = [s.get("date") for s in sessions if s.get("date")]
+    all_learnings: list[str] = []
+    all_questions: list[str] = []
+    all_issues: set[str] = set()
+
+    for s in sessions:
+        all_learnings.extend(s.get("learnings", []))
+        all_questions.extend(s.get("open_questions", []))
+        all_issues.update(s.get("issues_worked", []))
+
+    lines.append("### Overview")
+    lines.append("")
+    if dates:
+        lines.append(f"- **Period:** {min(dates)} to {max(dates)}")
+    lines.append(f"- **Sessions:** {len(sessions)}")
+    lines.append(f"- **Total learnings:** {len(all_learnings)}")
+    lines.append(f"- **Issues touched:** {len(all_issues)}")
+    lines.append("")
+
+    lines.append("### Timeline")
+    lines.append("")
+
+    by_date: dict[str, list[dict[str, Any]]] = {}
+    for s in sessions:
+        d = s.get("date", "unknown")
+        by_date.setdefault(d, []).append(s)
+
+    for d in sorted(by_date.keys()):
+        topics = [s.get("topic", "?") for s in by_date[d]]
+        count = len(topics)
+        topic_preview = ", ".join(topics[:3])
+        if len(topics) > 3:
+            topic_preview += f" (+{len(topics)-3} more)"
+        lines.append(f"- **{d}** ({count} session{'s' if count != 1 else ''}): {topic_preview}")
+
+    lines.append("")
+
+    lines.append("### Key Learnings")
+    lines.append("")
+
+    for s in sessions[-10:]:
+        learnings = s.get("learnings", [])
+        if learnings:
+            topic = s.get("topic", "?")
+            lines.append(f"- **{topic}:** {learnings[0]}")
+
+    lines.append("")
+
+    unique_questions: list[str] = []
+    seen: set[str] = set()
+    for s in sessions:
+        for q in s.get("open_questions", []):
+            if q not in seen:
+                unique_questions.append(q)
+                seen.add(q)
+
+    if unique_questions:
+        lines.append("### Open Questions")
+        lines.append("")
+        for q in unique_questions:
+            lines.append(f"- {q}")
+        lines.append("")
+
+    return "\n".join(lines)

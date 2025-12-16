@@ -7,11 +7,10 @@ description: Local-first issue tracking with GitHub Issues semantics. Create, cl
 
 A minimal, append-only event log for tracking issues. Designed for close human-AI collaboration.
 
-**Portable:** This skill directory contains both documentation and tooling. Copy to any repo to use.
-
-## Tools
-
-- `issues.py` - Query and write tool for managing issues (auto-creates data file if missing)
+**Installation required:** Install the `skill-issues` package for CLI tools:
+```bash
+uv tool install skill-issues
+```
 
 ## Data Location
 
@@ -21,22 +20,25 @@ Events are stored in `.issues/events.jsonl` (project root) - one JSON event per 
 
 ```bash
 # Reading
-python3 issues.py              # Open issues (default)
-python3 issues.py --open       # Open issues (explicit)
-python3 issues.py --closed     # Closed issues
-python3 issues.py --ready      # Open and not blocked
-python3 issues.py --all        # All issues including closed
-python3 issues.py ID           # Show single issue
-python3 issues.py --show ID    # Show single issue (explicit)
-python3 issues.py --diagram    # Mermaid dependency diagram
-python3 issues.py --diagram ascii  # ASCII dependency diagram
+issues                    # Open issues (default)
+issues --open             # Open issues (explicit)
+issues --closed           # Closed issues
+issues --ready            # Open and not blocked
+issues --all              # All issues including closed
+issues ID                 # Show single issue
+issues --show ID          # Show single issue (explicit)
+issues --diagram          # Mermaid dependency diagram
+issues --diagram ascii    # ASCII dependency diagram
 
 # Writing
-python3 issues.py --create "Title" [options]
-python3 issues.py --close ID "Reason"
-python3 issues.py --note ID "Content"
-python3 issues.py --block ID "BLOCKER_IDS"
-python3 issues.py --unblock ID "BLOCKER_IDS"
+issues --create "Title" [options]
+issues --close ID "Reason"
+issues --note ID "Content"
+issues --block ID "BLOCKER_IDS"
+issues --unblock ID "BLOCKER_IDS"
+
+# TUI (coming soon)
+issues board              # Kanban board view
 ```
 
 **Why append-only?**
@@ -82,21 +84,21 @@ Four event types:
 
 ```bash
 # Open issues (default)
-python3 issues.py
-python3 issues.py --open       # explicit form
+issues
+issues --open       # explicit form
 
 # Closed issues
-python3 issues.py --closed
+issues --closed
 
 # Ready issues (open and not blocked by other open issues)
-python3 issues.py --ready
+issues --ready
 
 # All issues including closed
-python3 issues.py --all
+issues --all
 
 # Show single issue by ID
-python3 issues.py 053          # shorthand
-python3 issues.py --show 053   # explicit form
+issues 053          # shorthand
+issues --show 053   # explicit form
 ```
 
 Output is JSON array sorted by priority, then ID (except single issue which returns object).
@@ -104,7 +106,7 @@ Output is JSON array sorted by priority, then ID (except single issue which retu
 ## Creating Issues
 
 ```bash
-python3 issues.py --create "Title" [options]
+issues --create "Title" [options]
 ```
 
 **Options:**
@@ -117,14 +119,14 @@ python3 issues.py --create "Title" [options]
 **Examples:**
 ```bash
 # Simple task
-python3 issues.py --create "Fix login timeout"
+issues --create "Fix login timeout"
 
 # Bug with details
-python3 issues.py --create "API returns 500 on empty input" \
+issues --create "API returns 500 on empty input" \
   -t bug -p 1 -d "Discovered when testing edge cases"
 
 # Feature blocked by other work
-python3 issues.py --create "Add export to CSV" \
+issues --create "Add export to CSV" \
   -t feature -b 014,015 -l "needs-review"
 ```
 
@@ -133,12 +135,12 @@ Returns `{"created": "036"}` with the new issue ID.
 ## Adding Notes
 
 ```bash
-python3 issues.py --note ID "Content"
+issues --note ID "Content"
 ```
 
 **Example:**
 ```bash
-python3 issues.py --note 015 "User clarified: they want CSV format, not JSON"
+issues --note 015 "User clarified: they want CSV format, not JSON"
 ```
 
 **When to add notes:**
@@ -155,10 +157,10 @@ Add or remove blockers from existing issues:
 
 ```bash
 # Add blockers (comma-separated IDs)
-python3 issues.py --block 014 "012,013"
+issues --block 014 "012,013"
 
 # Remove blockers
-python3 issues.py --unblock 014 "012"
+issues --unblock 014 "012"
 ```
 
 Returns `{"blocked": "014", "added": ["012", "013"]}` or `{"unblocked": "014", "removed": ["012"]}`.
@@ -183,12 +185,12 @@ For other mutable fields (`priority`, `labels`), use the Edit tool to append an 
 ## Closing Issues
 
 ```bash
-python3 issues.py --close ID "Reason"
+issues --close ID "Reason"
 ```
 
 **Example:**
 ```bash
-python3 issues.py --close 015 "Done - implemented CSV export with unicode support"
+issues --close 015 "Done - implemented CSV export with unicode support"
 ```
 
 Returns `{"closed": "015"}` on success.
@@ -199,7 +201,7 @@ Returns `{"closed": "015"}` on success.
 
 1. **Session start**: Check ready work
    ```bash
-   python3 issues.py --ready
+   issues --ready
    ```
 
 2. **Pick work**: Choose from ready issues based on priority
@@ -231,13 +233,13 @@ Generate visual diagrams showing issue relationships:
 
 ```bash
 # Mermaid format (default) - for GitHub READMEs
-python3 issues.py --diagram
+issues --diagram
 
 # ASCII format - for terminal/plain text
-python3 issues.py --diagram ascii
+issues --diagram ascii
 
 # Include closed issues to see full project history
-python3 issues.py --diagram --include-closed
+issues --diagram --include-closed
 ```
 
 **Mermaid output** renders in GitHub markdown:
@@ -267,7 +269,6 @@ The `--ready` flag handles simple blocking (direct dependencies on open issues).
 
 - **Append-only**: Never modify existing events
 - **Immutable fields**: Close and recreate if wrong
-- **Simple tools**: Python for reads, Edit for writes
 - **Git-friendly**: Diffs are always additions
 - **Claude does reasoning**: Tool just filters, Claude interprets
 - **Proactive logging**: Create issues for bugs/problems when you encounter them, not later

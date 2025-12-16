@@ -7,13 +7,12 @@ description: Session memory for tracking learnings, open questions, and next act
 
 Personal session memory for AI agent conversations. Captures learnings, open questions, and next actions across sessions.
 
-**Portable:** This skill directory can be copied to any repo. Data lives in `.memory/sessions.jsonl` (project root).
+**Installation required:** Install the `skill-issues` package for CLI tools:
+```bash
+uv tool install skill-issues
+```
 
 **Dependency:** This skill optionally references the [issues skill](../issues/SKILL.md) via the `issues_worked` field. The dependency is one-way: sessions can reference issues, but issues never reference sessions.
-
-## Tools
-
-- `sessions.py` - Query and create tool for sessions (auto-creates data file if missing)
 
 ## Data Location
 
@@ -21,12 +20,26 @@ Sessions are stored in `.memory/sessions.jsonl` (project root) - one JSON object
 
 **Note:** Sessions are personal (single-user). Unlike issues, they are not designed for multi-user sync via git.
 
-## Read vs Write Strategy
+## Quick Reference
 
-| Operation | Method | Notes |
-|-----------|--------|-------|
-| All reads | `sessions.py` | Auto-initializes, outputs JSON |
-| Create | `sessions.py --create` | Auto-generates ID and date |
+```bash
+# Reading
+sessions                  # Last session (default)
+sessions --last 3         # Last N sessions
+sessions --all            # All sessions
+sessions --open-questions # All open questions across sessions
+sessions --next-actions   # All next actions (with session attribution)
+sessions --topic beads    # Search by topic
+sessions --issue 014      # Sessions that worked on a specific issue
+sessions --summary        # Markdown summary for documentation
+sessions --timeline       # Markdown timeline of sessions
+
+# Writing
+sessions --create "topic" [options]
+
+# TUI
+sessions view             # Interactive session browser
+```
 
 ## Schema
 
@@ -62,37 +75,50 @@ Sessions are stored in `.memory/sessions.jsonl` (project root) - one JSON object
 
 ```bash
 # Last session (default - most common for session startup)
-python3 sessions.py
+sessions
 
 # Last N sessions
-python3 sessions.py --last 3
+sessions --last 3
 
 # All sessions
-python3 sessions.py --all
+sessions --all
 
 # All open questions across sessions
-python3 sessions.py --open-questions
+sessions --open-questions
 
 # All next actions (with session attribution)
-python3 sessions.py --next-actions
+sessions --next-actions
 
 # Search by topic
-python3 sessions.py --topic beads
+sessions --topic beads
 
 # Find sessions that worked on a specific issue
-python3 sessions.py --issue 014
+sessions --issue 014
 
 # Generate markdown summary for documentation
-python3 sessions.py --summary
+sessions --summary
 
 # Generate markdown timeline of sessions
-python3 sessions.py --timeline
+sessions --timeline
 
 # Show help
-python3 sessions.py --help
+sessions --help
 ```
 
-**Note:** `--recent` is accepted as an alias for `--last`. Unknown flags produce a warning.
+## Interactive TUI
+
+Browse sessions interactively with a split-view interface:
+
+```bash
+sessions view
+```
+
+**Features:**
+- Left panel: session list with date, topic, and counts
+- Right panel: expanded session details (learnings, questions, actions)
+- Vim navigation: `j`/`k` (up/down), `g`/`G` (top/bottom)
+- Search: `/` to filter by topic, `Escape` to clear
+- Quit: `q`
 
 ## Documentation Output
 
@@ -100,10 +126,10 @@ Generate formatted markdown for READMEs and documentation:
 
 ```bash
 # Full summary with overview, timeline, key learnings, and open questions
-python3 sessions.py --summary
+sessions --summary
 
 # Timeline grouped by date with session stats
-python3 sessions.py --timeline
+sessions --timeline
 ```
 
 **Summary includes:**
@@ -120,10 +146,10 @@ python3 sessions.py --timeline
 
 ```bash
 # Basic session with topic only
-python3 sessions.py --create "topic-slug"
+sessions --create "topic-slug"
 
 # Full session with all fields
-python3 sessions.py --create "feature-implementation" \
+sessions --create "feature-implementation" \
   -l "First learning" \
   -l "Second learning" \
   -q "Open question to explore" \
@@ -146,7 +172,7 @@ The command auto-generates the session ID and sets today's date.
 User triggers with phrases like "load context", "what's the status", "last session", "where were we".
 
 ```bash
-python3 sessions.py
+sessions
 ```
 
 Review learnings, open questions, and next actions from last session.
@@ -181,4 +207,3 @@ Append a session entry capturing:
 - **Append-only**: Never modify existing sessions
 - **Personal**: Not designed for multi-user sync
 - **One-way dependency**: Sessions reference issues, not vice versa
-- **Lightweight**: Single Python script, no external dependencies

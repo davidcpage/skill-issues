@@ -1,0 +1,53 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "skill-issues"
+version = "0.1.0"
+description = "Local-first issue tracking and session memory for Claude Code"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+    { name = "David Page" }
+]
+keywords = ["claude-code", "issues", "sessions", "tui", "cli"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Bug Tracking",
+]
+dependencies = [
+    "textual>=0.89.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+]
+
+[project.scripts]
+issues = "skill_issues.issues.cli:main"
+sessions = "skill_issues.sessions.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/your-username/skill-issues"
+Repository = "https://github.com/your-username/skill-issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/skill_issues"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/README.md",
+    "/LICENSE",
+]
