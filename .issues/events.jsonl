@@ -166,3 +166,4 @@
 {"ts":"2025-12-16T16:42:34Z","type":"closed","id":"076","reason":"Implemented issues init subcommand with --all flag. Uses importlib to copy SKILL.md files from package data. Works for both editable and wheel installs."}
 {"ts":"2025-12-16T16:42:34Z","type":"closed","id":"077","reason":"Added sessions init subcommand. Installs sessions skill and adds Bash(sessions:*) permission."}
 {"ts":"2025-12-16T16:42:34Z","type":"closed","id":"078","reason":"Added adr CLI with init subcommand. Minimal CLI that only handles skill initialization."}
+{"ts":"2025-12-16T17:43:59Z","type":"closed","id":"070","reason":"Published skill-issues v0.1.0 to PyPI"}
