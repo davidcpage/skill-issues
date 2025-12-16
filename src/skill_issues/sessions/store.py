@@ -85,6 +85,70 @@ def create_session(
     return session
 
 
+def amend_session(
+    session_id: str | None = None,
+    learnings: list[str] | None = None,
+    open_questions: list[str] | None = None,
+    next_actions: list[str] | None = None,
+    issues_worked: list[str] | None = None,
+) -> dict[str, Any] | None:
+    """Amend an existing session by appending to its arrays.
+
+    Args:
+        session_id: Session ID to amend, or None for the most recent session.
+        learnings: Learnings to add.
+        open_questions: Questions to add.
+        next_actions: Actions to add.
+        issues_worked: Issue IDs to add.
+
+    Returns:
+        The amended session, or None if no sessions exist or ID not found.
+    """
+    sessions = load_sessions()
+    if not sessions:
+        return None
+
+    # Find the session to amend
+    if session_id is None:
+        target_idx = len(sessions) - 1
+    else:
+        target_idx = None
+        for i, s in enumerate(sessions):
+            if s.get("id") == session_id:
+                target_idx = i
+                break
+        if target_idx is None:
+            return None
+
+    session = sessions[target_idx]
+
+    # Append to array fields
+    if learnings:
+        session["learnings"] = session.get("learnings", []) + learnings
+    if open_questions:
+        session["open_questions"] = session.get("open_questions", []) + open_questions
+    if next_actions:
+        session["next_actions"] = session.get("next_actions", []) + next_actions
+    if issues_worked:
+        existing = session.get("issues_worked", [])
+        # Avoid duplicates for issue IDs
+        for issue_id in issues_worked:
+            if issue_id not in existing:
+                existing.append(issue_id)
+        session["issues_worked"] = existing
+
+    # Rewrite the file
+    _rewrite_sessions(sessions)
+    return session
+
+
+def _rewrite_sessions(sessions: list[dict[str, Any]]) -> None:
+    """Rewrite the entire sessions file."""
+    ensure_data_file()
+    lines = [json.dumps(s, separators=(",", ":")) for s in sessions]
+    SESSIONS_FILE.write_text("\n".join(lines) + "\n" if lines else "")
+
+
 # --- Filter functions ---
 
 def filter_by_issue(sessions: list[dict[str, Any]], issue_id: str) -> list[dict[str, Any]]:

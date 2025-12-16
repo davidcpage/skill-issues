@@ -25,6 +25,10 @@ def main() -> int:
     subparsers = parser.add_subparsers(dest="subcommand")
     subparsers.add_parser("board", help="Open interactive Kanban board TUI")
 
+    init_parser = subparsers.add_parser("init", help="Initialize skills in a project")
+    init_parser.add_argument("path", nargs="?", help="Project path (default: current directory)")
+    init_parser.add_argument("--all", "-a", action="store_true", help="Install all skills (issues, sessions, adr)")
+
     # Positional argument for issue ID (implicit --show)
     parser.add_argument("issue_id", nargs="?", metavar="ID", help="Issue ID to show (shorthand for --show)")
 
@@ -65,6 +69,14 @@ def main() -> int:
         from . import tui
         tui.run_app()
         return 0
+
+    if args.subcommand == "init":
+        from .. import init as init_module
+        if getattr(args, "all", False):
+            skills = ["issues", "sessions", "adr"]
+        else:
+            skills = ["issues"]
+        return init_module.run_init(skills, getattr(args, "path", None))
 
     # Handle write commands
     if args.create:

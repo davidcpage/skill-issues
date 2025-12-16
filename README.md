@@ -33,69 +33,23 @@ issues (standalone)
 
 ## Quick Start
 
-### 1. Install CLI tools
-
 ```bash
-# Install globally with uv (recommended)
-uv tool install skill-issues
-
-# Or with pipx
-pipx install skill-issues
-```
-
-This provides global `issues` and `sessions` commands that work in any directory.
-
-### 2. Register skills with Claude Code
-
-Copy skill definitions to your project so Claude Code recognizes them:
-
-```bash
-# Clone this repo
+# Clone and install
 git clone https://github.com/davidcpage/skill-issues.git
+cd skill-issues
+uv tool install -e .
 
-# Copy skill definitions (SKILL.md files)
-mkdir -p /path/to/your/project/.claude/skills
-cp -r skill-issues/.claude/skills/issues /path/to/your/project/.claude/skills/
-cp -r skill-issues/.claude/skills/sessions /path/to/your/project/.claude/skills/
-cp -r skill-issues/.claude/skills/adr /path/to/your/project/.claude/skills/
+# Initialize in your project (installs all skills)
+issues init --all /path/to/your/project
 ```
 
-### 3. Add permissions
+This copies skill files and sets up permissions automatically.
 
-In your project's `.claude/settings.json`:
+To update: `git pull` (in the skill-issues directory)
 
-```json
-{
-  "permissions": {
-    "allow": [
-      "Bash(issues:*)",
-      "Bash(sessions:*)"
-    ]
-  }
-}
-```
+You can also install skills individually: `issues init`, `sessions init`, `adr init`
 
 Data directories (`.issues/`, `.memory/`, `.decisions/`) are created automatically on first use.
-
-### Alternative: Symlink for updates
-
-If you want automatic updates as skills evolve:
-
-```bash
-# Clone somewhere permanent
-git clone https://github.com/davidcpage/skill-issues.git ~/tools/skill-issues
-
-# Symlink in your project
-mkdir -p .claude/skills
-ln -s ~/tools/skill-issues/.claude/skills/issues .claude/skills/issues
-ln -s ~/tools/skill-issues/.claude/skills/sessions .claude/skills/sessions
-ln -s ~/tools/skill-issues/.claude/skills/adr .claude/skills/adr
-
-# Exclude from git
-echo ".claude/skills/" >> .gitignore
-```
-
-To update: `git pull` in your skill-issues clone.
 
 ## Usage
 
@@ -175,17 +129,7 @@ Claude creates a decision record in `.decisions/` capturing context, options, an
 
 ### CLI Tools
 
-Install global CLI tools for direct command-line access:
-
-```bash
-# Install with uv (recommended)
-uv tool install skill-issues
-
-# Or with pipx
-pipx install skill-issues
-```
-
-This provides `issues` and `sessions` commands that work in any project directory.
+The `issues` and `sessions` commands (installed during Quick Start) also work directly from the terminal:
 
 **Issues CLI:**
 ```bash
@@ -205,6 +149,7 @@ sessions                  # Last session
 sessions --last 3         # Last N sessions
 sessions --open-questions # All open questions
 sessions --create "topic" # Create session
+sessions --amend -l "learning"  # Add to last session
 sessions view             # Interactive TUI browser
 ```
 
@@ -213,18 +158,6 @@ sessions view             # Interactive TUI browser
 `issues board` - Kanban board with Ready/Blocked/Closed columns, vim navigation (h/l/j/k), details panel.
 
 `sessions view` - Session browser with date list, search filter (/), full session details.
-
-**Add CLI permissions** to your project's `.claude/settings.json`:
-```json
-{
-  "permissions": {
-    "allow": [
-      "Bash(issues:*)",
-      "Bash(sessions:*)"
-    ]
-  }
-}
-```
 
 For full CLI documentation, see:
 - `.claude/skills/issues/SKILL.md`

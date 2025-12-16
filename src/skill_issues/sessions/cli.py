@@ -19,11 +19,14 @@ Examples:
   sessions --last 3                # Last 3 sessions
   sessions --open-questions        # All open questions
   sessions --create "feature-x" -l "Learned thing" -i "001,002"
+  sessions --amend -l "Another learning"      # Amend last session
+  sessions --amend s041 -l "Learning"         # Amend specific session
 """
     )
 
-    # Subcommand for TUI
-    parser.add_argument("command", nargs="?", choices=["view"], help="Subcommand: view (interactive TUI)")
+    # Subcommands
+    parser.add_argument("command", nargs="?", choices=["view", "init"], help="Subcommand: view (TUI), init (setup skill)")
+    parser.add_argument("init_path", nargs="?", help="Project path for init (default: current directory)")
 
     # Query options (mutually exclusive group)
     query = parser.add_mutually_exclusive_group()
@@ -39,7 +42,11 @@ Examples:
     # Create command
     query.add_argument("--create", metavar="TOPIC", help="Create a new session with given topic")
 
-    # Create options (only used with --create)
+    # Amend command
+    query.add_argument("--amend", nargs="?", const=True, metavar="ID",
+                       help="Amend a session (last session if no ID given)")
+
+    # Options for --create and --amend
     parser.add_argument("-l", "--learning", action="append", metavar="TEXT",
                         help="Add a learning (can be repeated)")
     parser.add_argument("-q", "--question", action="append", metavar="TEXT",
@@ -57,6 +64,11 @@ Examples:
         tui.run_app()
         return 0
 
+    # Handle init subcommand
+    if args.command == "init":
+        from .. import init as init_module
+        return init_module.run_init(["sessions"], args.init_path)
+
     # Handle create command
     if args.create:
         issues_worked = args.issues.split(",") if args.issues else None
@@ -68,6 +80,50 @@ Examples:
             issues_worked=issues_worked,
         )
         print(json.dumps(session, indent=2))
+        return 0
+
+    # Handle amend command
+    if args.amend:
+        # Check if anything to amend
+        if not any([args.learning, args.question, args.action, args.issues]):
+            print("Error: --amend requires at least one of -l, -q, -a, or -i", file=sys.stderr)
+            return 1
+
+        # args.amend is True (no ID) or a string (session ID)
+        session_id = None if args.amend is True else args.amend
+        issues_worked = args.issues.split(",") if args.issues else None
+
+        session = store.amend_session(
+            session_id=session_id,
+            learnings=args.learning,
+            open_questions=args.question,
+            next_actions=args.action,
+            issues_worked=issues_worked,
+        )
+
+        if session is None:
+            if session_id:
+                print(f"Error: Session '{session_id}' not found", file=sys.stderr)
+            else:
+                print("Error: No sessions exist yet. Use --create first.", file=sys.stderr)
+            return 1
+
+        # Build summary of what was added
+        added = []
+        if args.learning:
+            n = len(args.learning)
+            added.append(f"{n} learning{'s' if n != 1 else ''}")
+        if args.question:
+            n = len(args.question)
+            added.append(f"{n} question{'s' if n != 1 else ''}")
+        if args.action:
+            n = len(args.action)
+            added.append(f"{n} action{'s' if n != 1 else ''}")
+        if args.issues:
+            n = len(issues_worked)
+            added.append(f"{n} issue{'s' if n != 1 else ''}")
+
+        print(f"Amended session {session['id']}: added {', '.join(added)}")
         return 0
 
     # Query commands

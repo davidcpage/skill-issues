@@ -37,6 +37,7 @@ dev = [
 [project.scripts]
 issues = "skill_issues.issues.cli:main"
 sessions = "skill_issues.sessions.cli:main"
+adr = "skill_issues.adr.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/your-username/skill-issues"
@@ -44,6 +45,11 @@ Repository = "https://github.com/your-username/skill-issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/skill_issues"]
+
+[tool.hatch.build.targets.wheel.force-include]
+".claude/skills/issues/SKILL.md" = "skill_issues/skills/issues/SKILL.md"
+".claude/skills/sessions/SKILL.md" = "skill_issues/skills/sessions/SKILL.md"
+".claude/skills/adr/SKILL.md" = "skill_issues/skills/adr/SKILL.md"
 
 [tool.hatch.build.targets.sdist]
 include = [
