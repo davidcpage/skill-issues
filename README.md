@@ -2,7 +2,7 @@
 
 Lightweight, local-first skills for Claude Code.
 
-![Screenshot of Claude Code invoking the issues skill with the prompt "What have we got to work on next?"](skill-issues.png)
+![Screenshot of Claude Code invoking the issues skill with the prompt "What have we got to work on next?"](screenshots/skill-issues.png)
 
 ## What's Inside
 
@@ -150,14 +150,18 @@ sessions --last 3         # Last N sessions
 sessions --open-questions # All open questions
 sessions --create "topic" # Create session
 sessions --amend -l "learning"  # Add to last session
-sessions view             # Interactive TUI browser
+sessions board            # Interactive TUI browser
 ```
 
 **TUI Interfaces:**
 
 `issues board` - Kanban board with Ready/Blocked/Closed columns, vim navigation (h/l/j/k), details panel.
 
-`sessions view` - Session browser with date list, search filter (/), full session details.
+![Issues board TUI](screenshots/issues-board.png)
+
+`sessions board` - Session browser with date list, search filter (/), full session details.
+
+![Sessions board TUI](screenshots/sessions-board.png)
 
 For full CLI documentation, see:
 - `.claude/skills/issues/SKILL.md`
@@ -168,9 +172,9 @@ For full CLI documentation, see:
 
 This repo was built using its own skills. The `.issues/` and `.memory/` directories contain the actual issues and session logs from development:
 
-- **46 issues** tracked from initial prototype to publishable skills
-- **22 sessions** capturing learnings about append-only logs, skill design, and more
-- **3 ADRs** documenting key design decisions
+- **78 issues** tracked from initial prototype to publishable skills
+- **43 sessions** capturing learnings about append-only logs, skill design, and more
+- **6 ADRs** documenting key design decisions
 
 Explore them to see the skills in real use.
 

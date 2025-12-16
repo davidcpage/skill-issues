@@ -41,7 +41,7 @@ This provides global `issues` and `sessions` commands that work in any project d
 - `sessions` - Show last session
 - `sessions --last 3` / `sessions --topic keyword` - Query sessions
 - `sessions --create "topic"` - Create session
-- `sessions view` - Interactive TUI browser
+- `sessions board` - Interactive TUI browser
 
 ### Permissions
 

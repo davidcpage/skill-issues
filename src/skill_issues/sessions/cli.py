@@ -15,7 +15,7 @@ def main() -> int:
         epilog="""
 Examples:
   sessions                         # Last session
-  sessions view                    # Interactive TUI browser
+  sessions board                   # Interactive TUI browser
   sessions --last 3                # Last 3 sessions
   sessions --open-questions        # All open questions
   sessions --create "feature-x" -l "Learned thing" -i "001,002"
@@ -25,7 +25,7 @@ Examples:
     )
 
     # Subcommands
-    parser.add_argument("command", nargs="?", choices=["view", "init"], help="Subcommand: view (TUI), init (setup skill)")
+    parser.add_argument("command", nargs="?", choices=["board", "init"], help="Subcommand: board (TUI), init (setup skill)")
     parser.add_argument("init_path", nargs="?", help="Project path for init (default: current directory)")
 
     # Query options (mutually exclusive group)
@@ -58,8 +58,8 @@ Examples:
 
     args = parser.parse_args()
 
-    # Handle view subcommand (TUI)
-    if args.command == "view":
+    # Handle board subcommand (TUI)
+    if args.command == "board":
         from . import tui
         tui.run_app()
         return 0

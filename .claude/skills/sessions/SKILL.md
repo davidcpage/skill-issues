@@ -38,7 +38,7 @@ sessions --timeline       # Markdown timeline of sessions
 sessions --create "topic" [options]
 
 # TUI
-sessions view             # Interactive session browser
+sessions board            # Interactive session browser
 ```
 
 ## Schema
@@ -110,7 +110,7 @@ sessions --help
 Browse sessions interactively with a split-view interface:
 
 ```bash
-sessions view
+sessions board
 ```
 
 **Features:**

@@ -25,7 +25,7 @@ Inspiration: [beads_viewer](https://github.com/Dicklesworthstone/beads_viewer) p
 
 2. **TUI subcommands** for human visualization:
    - `issues board` - kanban board view of issues
-   - `sessions view` - scrollable session browser
+   - `sessions board` - scrollable session browser
 
 3. **Install via uv tool**:
    ```bash
@@ -104,7 +104,7 @@ Inspiration: [beads_viewer](https://github.com/Dicklesworthstone/beads_viewer) p
    - CLI imports store and provides argparse interface
    - TUI imports store and provides Textual interface
 
-### Phase 2: Sessions TUI (`sessions view`)
+### Phase 2: Sessions TUI (`sessions board`)
 
 Priority: Sessions viewer first (sharpest pain point for human context-gathering)
 
@@ -136,7 +136,7 @@ Features:
 ## Open Questions
 
 1. Should `issues board` show closed issues by default or require a flag?
-2. Do we want a combined dashboard view, or just separate `sessions view` and `issues board`?
+2. Do we want a combined dashboard view, or just separate `sessions board` and `issues board`?
 3. Should TUI support write operations (close issue, add note) or stay read-only?
 
 ## Lessons Learned
