@@ -34,8 +34,8 @@ issues --diagram ascii    # ASCII dependency diagram
 issues --create "Title" [options]
 issues --close ID "Reason"
 issues --note ID "Content"
-issues --block ID "BLOCKER_IDS"
-issues --unblock ID "BLOCKER_IDS"
+issues --add-dep ID "DEP_IDS"
+issues --remove-dep ID "DEP_IDS"
 
 # TUI
 issues board              # Kanban board view
@@ -53,9 +53,9 @@ Four event types:
 
 ```json
 // created - sets initial fields
-{"ts": "2025-12-13T14:00:00Z", "type": "created", "id": "014", "title": "Short title", "issue_type": "task", "priority": 2, "description": "Details", "blocked_by": ["013"], "labels": ["needs-review"]}
+{"ts": "2025-12-13T14:00:00Z", "type": "created", "id": "014", "title": "Short title", "issue_type": "task", "priority": 2, "description": "Details", "depends_on": ["013"], "labels": ["needs-review"]}
 
-// updated - changes mutable fields (priority, blocked_by, labels)
+// updated - changes mutable fields (priority, depends_on, labels)
 {"ts": "2025-12-13T14:15:00Z", "type": "updated", "id": "014", "priority": 1, "reason": "Blocking other work, needs to be done first"}
 
 // note - adds context during work (can have multiple per issue)
@@ -73,12 +73,12 @@ Four event types:
 - `issue_type`: "bug", "feature", or "task" (created only)
 - `priority`: 0=critical, 1=high, 2=medium (default), 3=low, 4=backlog (created or updated)
 - `description`: Detailed context (created only, optional but recommended)
-- `blocked_by`: Array of issue IDs (created or updated)
+- `depends_on`: Array of issue IDs this issue depends on (created or updated)
 - `labels`: Array of custom tags for categorization (created or updated, optional). Examples: "needs-review", "breaking-change", "documentation"
 - `content`: Free-form text for notes (note only)
 - `reason`: Explanation for update or closure (updated or closed)
 
-**Mutability:** Most fields are immutable after creation. Use `updated` events to change `priority`, `blocked_by`, or `labels`. Use `note` events to add context. If title/description are fundamentally wrong, close and recreate.
+**Mutability:** Most fields are immutable after creation. Use `updated` events to change `priority`, `depends_on`, or `labels`. Use `note` events to add context. If title/description are fundamentally wrong, close and recreate.
 
 ## Reading Issues
 
@@ -113,7 +113,7 @@ issues --create "Title" [options]
 - `-t, --type {bug,feature,task}` - Issue type (default: task)
 - `-p, --priority {0,1,2,3,4}` - Priority 0=critical to 4=backlog (default: 2)
 - `-d, --description TEXT` - Detailed description
-- `-b, --blocked-by IDS` - Comma-separated blocking issue IDs
+- `-b, --depends-on IDS` - Comma-separated dependency issue IDs
 - `-l, --labels LABELS` - Comma-separated labels
 
 **Examples:**
@@ -153,19 +153,19 @@ Notes appear in the issue's `notes` array when reading issues.
 
 ## Updating Dependencies
 
-Add or remove blockers from existing issues:
+Add or remove dependencies from existing issues:
 
 ```bash
-# Add blockers (comma-separated IDs)
-issues --block 014 "012,013"
+# Add dependencies (comma-separated IDs)
+issues --add-dep 014 "012,013"
 
-# Remove blockers
-issues --unblock 014 "012"
+# Remove dependencies
+issues --remove-dep 014 "012"
 ```
 
-Returns `{"blocked": "014", "added": ["012", "013"]}` or `{"unblocked": "014", "removed": ["012"]}`.
+Returns `{"issue": "014", "added_deps": ["012", "013"]}` or `{"issue": "014", "removed_deps": ["012"]}`.
 
-**Error handling:** Returns error JSON to stderr if issue doesn't exist, is already closed, or blocker IDs are invalid.
+**Error handling:** Returns error JSON to stderr if issue doesn't exist, is already closed, or dependency IDs are invalid.
 
 ## Other Updates
 
@@ -177,7 +177,7 @@ For other mutable fields (`priority`, `labels`), use the Edit tool to append an 
 
 **Mutable fields:**
 - `priority` - reprioritize as understanding evolves
-- `blocked_by` - add or change dependencies (prefer `--block`/`--unblock` commands)
+- `depends_on` - add or change dependencies (prefer `--add-dep`/`--remove-dep` commands)
 - `labels` - add or change custom tags
 
 **Always include `reason`** to explain why the change was made. Updates appear in the issue's `updates` array with before/after values for traceability.
@@ -208,7 +208,7 @@ Returns `{"closed": "015"}` on success.
 
 3. **During work**:
    - Add note events for discoveries, decisions, user clarifications
-   - Create new issues with `blocked_by` if you find dependent work
+   - Create new issues with `depends_on` if you find dependent work
    - **Proactively log bugs and issues you encounter** (see below)
 
 4. **Complete**: Append a closed event with clear reason
@@ -246,7 +246,7 @@ issues --diagram --include-closed
 - Uses left-right layout for vertical scrolling (better than wide horizontal diagrams)
 - Rectangle nodes = open issues
 - Stadium (rounded) nodes = closed issues
-- Arrows show blocked-by relationships (blocker → blocked)
+- Arrows show dependency relationships (dependency → dependent)
 - Colors: blue = ready, pink = blocked, green = closed
 
 **ASCII output** shows:
@@ -271,7 +271,7 @@ issues board
 
 **Features:**
 - Issue cards show priority badge, type icon, ID, and title
-- Right panel shows full issue details (description, labels, blockers, notes)
+- Right panel shows full issue details (description, labels, dependencies, notes)
 - Issues sorted by priority within each column
 
 **Vim Navigation:**
@@ -288,7 +288,7 @@ For small issue counts (<50), pass the output to Claude who can:
 - Find transitive dependencies (A blocks B blocks C)
 - Suggest what to work on next based on the graph
 
-The `--ready` flag handles simple blocking (direct dependencies on open issues).
+The `--ready` flag handles simple dependency checking (issues with direct dependencies on other open issues).
 
 ## Principles
 

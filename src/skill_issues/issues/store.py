@@ -54,13 +54,15 @@ def load_issues() -> dict[str, dict[str, Any]]:
         event_type = event["type"]
 
         if event_type == "created":
+            # Support both old "blocked_by" and new "depends_on" field names
+            depends_on = event.get("depends_on", event.get("blocked_by", []))
             issues[issue_id] = {
                 "id": issue_id,
                 "title": event["title"],
                 "type": event.get("issue_type", "task"),
                 "priority": event.get("priority", 2),
                 "description": event.get("description", ""),
-                "blocked_by": event.get("blocked_by", []),
+                "depends_on": depends_on,
                 "labels": event.get("labels", []),
                 "created": event["ts"],
                 "status": "open",
@@ -74,10 +76,15 @@ def load_issues() -> dict[str, dict[str, Any]]:
                 if "reason" in event:
                     update_record["reason"] = event["reason"]
                 # Apply mutable field changes
-                for field in ["priority", "blocked_by", "labels"]:
+                for field in ["priority", "labels"]:
                     if field in event:
                         update_record[field] = {"from": issues[issue_id].get(field), "to": event[field]}
                         issues[issue_id][field] = event[field]
+                # Handle depends_on (support old "blocked_by" name for backwards compatibility)
+                dep_value = event.get("depends_on", event.get("blocked_by"))
+                if dep_value is not None:
+                    update_record["depends_on"] = {"from": issues[issue_id].get("depends_on"), "to": dep_value}
+                    issues[issue_id]["depends_on"] = dep_value
                 issues[issue_id]["updates"].append(update_record)
         elif event_type == "note":
             if issue_id in issues:
@@ -115,15 +122,15 @@ def filter_closed(issues: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]
 
 
 def filter_ready(issues: dict[str, dict[str, Any]], all_issues: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
-    """Return open issues not blocked by other open issues."""
+    """Return open issues with no unsatisfied dependencies."""
     open_ids = set(filter_open(all_issues).keys())
     ready = {}
     for k, v in issues.items():
         if v["status"] != "open":
             continue
-        blockers = set(v.get("blocked_by", []))
-        open_blockers = blockers & open_ids
-        if not open_blockers:
+        deps = set(v.get("depends_on", []))
+        unsatisfied_deps = deps & open_ids
+        if not unsatisfied_deps:
             ready[k] = v
     return ready
 
@@ -135,7 +142,7 @@ def create_issue(
     issue_type: str = "task",
     priority: int = 2,
     description: str = "",
-    blocked_by: list[str] | None = None,
+    depends_on: list[str] | None = None,
     labels: list[str] | None = None,
 ) -> str:
     """Create a new issue and return its ID."""
@@ -153,8 +160,8 @@ def create_issue(
 
     if description:
         event["description"] = description
-    if blocked_by:
-        event["blocked_by"] = blocked_by
+    if depends_on:
+        event["depends_on"] = depends_on
     if labels:
         event["labels"] = labels
 
@@ -198,8 +205,8 @@ def add_note(issue_id: str, content: str) -> None:
     append_event(event)
 
 
-def block_issue(issue_id: str, blocker_ids: list[str]) -> list[str]:
-    """Add blockers to an issue. Returns list of added blocker IDs."""
+def add_dependency(issue_id: str, dep_ids: list[str]) -> list[str]:
+    """Add dependencies to an issue. Returns list of added dependency IDs."""
     issues = load_issues()
 
     if issue_id not in issues:
@@ -207,34 +214,34 @@ def block_issue(issue_id: str, blocker_ids: list[str]) -> list[str]:
     if issues[issue_id]["status"] == "closed":
         raise ValueError(f"Issue {issue_id} is already closed")
 
-    # Validate blocker IDs exist
-    for bid in blocker_ids:
-        if bid not in issues:
-            raise ValueError(f"Blocker issue {bid} not found")
+    # Validate dependency IDs exist
+    for dep_id in dep_ids:
+        if dep_id not in issues:
+            raise ValueError(f"Dependency issue {dep_id} not found")
 
-    current_blockers = set(issues[issue_id].get("blocked_by", []))
-    new_blockers = set(blocker_ids)
-    added = new_blockers - current_blockers
+    current_deps = set(issues[issue_id].get("depends_on", []))
+    new_deps = set(dep_ids)
+    added = new_deps - current_deps
 
     if not added:
-        raise ValueError(f"Issue {issue_id} is already blocked by {blocker_ids}")
+        raise ValueError(f"Issue {issue_id} already depends on {dep_ids}")
 
-    updated_blockers = sorted(current_blockers | new_blockers)
+    updated_deps = sorted(current_deps | new_deps)
 
     event = {
         "ts": get_timestamp(),
         "type": "updated",
         "id": issue_id,
-        "blocked_by": updated_blockers,
-        "reason": f"Added blockers: {', '.join(sorted(added))}",
+        "depends_on": updated_deps,
+        "reason": f"Added dependencies: {', '.join(sorted(added))}",
     }
 
     append_event(event)
     return sorted(added)
 
 
-def unblock_issue(issue_id: str, blocker_ids: list[str]) -> list[str]:
-    """Remove blockers from an issue. Returns list of removed blocker IDs."""
+def remove_dependency(issue_id: str, dep_ids: list[str]) -> list[str]:
+    """Remove dependencies from an issue. Returns list of removed dependency IDs."""
     issues = load_issues()
 
     if issue_id not in issues:
@@ -242,21 +249,21 @@ def unblock_issue(issue_id: str, blocker_ids: list[str]) -> list[str]:
     if issues[issue_id]["status"] == "closed":
         raise ValueError(f"Issue {issue_id} is already closed")
 
-    current_blockers = set(issues[issue_id].get("blocked_by", []))
-    to_remove = set(blocker_ids)
-    removed = to_remove & current_blockers
+    current_deps = set(issues[issue_id].get("depends_on", []))
+    to_remove = set(dep_ids)
+    removed = to_remove & current_deps
 
     if not removed:
-        raise ValueError(f"Issue {issue_id} is not blocked by any of {blocker_ids}")
+        raise ValueError(f"Issue {issue_id} does not depend on any of {dep_ids}")
 
-    updated_blockers = sorted(current_blockers - to_remove)
+    updated_deps = sorted(current_deps - to_remove)
 
     event = {
         "ts": get_timestamp(),
         "type": "updated",
         "id": issue_id,
-        "blocked_by": updated_blockers,
-        "reason": f"Removed blockers: {', '.join(sorted(removed))}",
+        "depends_on": updated_deps,
+        "reason": f"Removed dependencies: {', '.join(sorted(removed))}",
     }
 
     append_event(event)
@@ -291,9 +298,9 @@ def generate_mermaid_diagram(
     # Collect edges
     edges: list[tuple[str, str]] = []
     for issue_id, issue in display_issues.items():
-        for blocker_id in issue.get("blocked_by", []):
-            if blocker_id in display_issues:
-                edges.append((blocker_id, issue_id))
+        for dep_id in issue.get("depends_on", []):
+            if dep_id in display_issues:
+                edges.append((dep_id, issue_id))
                 has_incoming.add(issue_id)
 
     # Generate node definitions with truncated titles
@@ -309,8 +316,8 @@ def generate_mermaid_diagram(
             lines.append(f'    {issue_id}["{issue_id}: {title}"]')
 
     # Generate edges
-    for blocker_id, blocked_id in edges:
-        lines.append(f"    {blocker_id} --> {blocked_id}")
+    for dep_id, dependent_id in edges:
+        lines.append(f"    {dep_id} --> {dependent_id}")
 
     # Style nodes
     for issue_id, issue in display_issues.items():
@@ -357,10 +364,10 @@ def generate_ascii_diagram(
         max_iterations -= 1
         at_this_depth: set[str] = set()
         for issue_id in remaining:
-            blockers = set(display_issues[issue_id].get("blocked_by", []))
-            blockers_in_display = blockers & set(display_issues.keys())
-            blockers_remaining = blockers_in_display & remaining
-            if not blockers_remaining:
+            deps = set(display_issues[issue_id].get("depends_on", []))
+            deps_in_display = deps & set(display_issues.keys())
+            deps_remaining = deps_in_display & remaining
+            if not deps_remaining:
                 at_this_depth.add(issue_id)
                 depths[issue_id] = depth
         remaining -= at_this_depth
@@ -378,7 +385,7 @@ def generate_ascii_diagram(
     # Output by depth level
     for d in sorted(by_depth.keys()):
         if d == 0:
-            lines.append("Root issues (no blockers):")
+            lines.append("Root issues (no dependencies):")
         else:
             lines.append(f"Depth {d}:")
 
@@ -390,24 +397,24 @@ def generate_ascii_diagram(
 
             if issue["status"] == "closed":
                 marker = "{CLOSED}"
-            elif set(issue.get("blocked_by", [])) & open_ids:
+            elif set(issue.get("depends_on", [])) & open_ids:
                 marker = "(BLOCKED)"
             else:
                 marker = "[READY]"
 
             lines.append(f"  {marker} {issue_id}: {title}")
 
-            blockers = issue.get("blocked_by", [])
-            if blockers:
-                blocker_strs = []
-                for b in blockers:
-                    if b in display_issues:
-                        status = "open" if all_issues[b]["status"] == "open" else "closed"
-                        blocker_strs.append(f"{b}({status})")
+            deps = issue.get("depends_on", [])
+            if deps:
+                dep_strs = []
+                for d in deps:
+                    if d in display_issues:
+                        status = "open" if all_issues[d]["status"] == "open" else "closed"
+                        dep_strs.append(f"{d}({status})")
                     else:
-                        blocker_strs.append(f"{b}(not shown)")
-                if blocker_strs:
-                    lines.append(f"           └── blocked by: {', '.join(blocker_strs)}")
+                        dep_strs.append(f"{d}(not shown)")
+                if dep_strs:
+                    lines.append(f"           └── depends on: {', '.join(dep_strs)}")
 
         lines.append("")
 

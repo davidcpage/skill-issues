@@ -42,8 +42,8 @@ def main() -> int:
     parser.add_argument("--create", metavar="TITLE", help="Create a new issue with the given title")
     parser.add_argument("--close", nargs=2, metavar=("ID", "REASON"), help="Close an issue")
     parser.add_argument("--note", nargs=2, metavar=("ID", "CONTENT"), help="Add a note to an issue")
-    parser.add_argument("--block", nargs=2, metavar=("ID", "BLOCKER_IDS"), help="Add blockers to an issue (comma-separated IDs)")
-    parser.add_argument("--unblock", nargs=2, metavar=("ID", "BLOCKER_IDS"), help="Remove blockers from an issue (comma-separated IDs)")
+    parser.add_argument("--add-dep", nargs=2, metavar=("ID", "DEP_IDS"), help="Add dependencies to an issue (comma-separated IDs)")
+    parser.add_argument("--remove-dep", nargs=2, metavar=("ID", "DEP_IDS"), help="Remove dependencies from an issue (comma-separated IDs)")
 
     # Diagram options
     parser.add_argument("--include-closed", action="store_true",
@@ -55,7 +55,7 @@ def main() -> int:
     parser.add_argument("--priority", "-p", type=int, choices=[0, 1, 2, 3, 4], default=2,
                         help="Priority 0=critical to 4=backlog (default: 2)")
     parser.add_argument("--description", "-d", default="", help="Issue description")
-    parser.add_argument("--blocked-by", "-b", default="", help="Comma-separated list of blocking issue IDs")
+    parser.add_argument("--depends-on", "-b", default="", help="Comma-separated list of dependency issue IDs")
     parser.add_argument("--labels", "-l", default="", help="Comma-separated list of labels")
 
     args = parser.parse_args()
@@ -68,7 +68,7 @@ def main() -> int:
 
     # Handle write commands
     if args.create:
-        blocked_by = parse_list_arg(args.blocked_by)
+        depends_on = parse_list_arg(args.depends_on)
         labels = parse_list_arg(args.labels)
         try:
             new_id = store.create_issue(
@@ -76,7 +76,7 @@ def main() -> int:
                 issue_type=args.type,
                 priority=args.priority,
                 description=args.description,
-                blocked_by=blocked_by,
+                depends_on=depends_on,
                 labels=labels,
             )
             print(json.dumps({"created": new_id}))
@@ -105,29 +105,29 @@ def main() -> int:
             return 1
         return 0
 
-    if args.block:
-        issue_id, blocker_ids_str = args.block
-        blocker_ids = parse_list_arg(blocker_ids_str)
-        if not blocker_ids:
-            print(json.dumps({"error": "No blocker IDs provided"}), file=sys.stderr)
+    if args.add_dep:
+        issue_id, dep_ids_str = args.add_dep
+        dep_ids = parse_list_arg(dep_ids_str)
+        if not dep_ids:
+            print(json.dumps({"error": "No dependency IDs provided"}), file=sys.stderr)
             return 1
         try:
-            added = store.block_issue(issue_id, blocker_ids)
-            print(json.dumps({"blocked": issue_id, "added": added}))
+            added = store.add_dependency(issue_id, dep_ids)
+            print(json.dumps({"issue": issue_id, "added_deps": added}))
         except ValueError as e:
             print(json.dumps({"error": str(e)}), file=sys.stderr)
             return 1
         return 0
 
-    if args.unblock:
-        issue_id, blocker_ids_str = args.unblock
-        blocker_ids = parse_list_arg(blocker_ids_str)
-        if not blocker_ids:
-            print(json.dumps({"error": "No blocker IDs provided"}), file=sys.stderr)
+    if args.remove_dep:
+        issue_id, dep_ids_str = args.remove_dep
+        dep_ids = parse_list_arg(dep_ids_str)
+        if not dep_ids:
+            print(json.dumps({"error": "No dependency IDs provided"}), file=sys.stderr)
             return 1
         try:
-            removed = store.unblock_issue(issue_id, blocker_ids)
-            print(json.dumps({"unblocked": issue_id, "removed": removed}))
+            removed = store.remove_dependency(issue_id, dep_ids)
+            print(json.dumps({"issue": issue_id, "removed_deps": removed}))
         except ValueError as e:
             print(json.dumps({"error": str(e)}), file=sys.stderr)
             return 1

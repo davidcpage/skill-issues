@@ -46,12 +46,12 @@ class IssueCard(Static):
         # Build card content
         content = f"{badge} {type_icon} [bold]{issue_id}[/]\n{title}"
 
-        # Show blockers if any
-        blockers = issue.get("blocked_by", [])
-        if blockers and issue.get("status") == "open":
-            content += f"\n[dim]blocked by: {', '.join(blockers[:3])}"
-            if len(blockers) > 3:
-                content += f" +{len(blockers) - 3}"
+        # Show dependencies if any
+        deps = issue.get("depends_on", [])
+        if deps and issue.get("status") == "open":
+            content += f"\n[dim]depends on: {', '.join(deps[:3])}"
+            if len(deps) > 3:
+                content += f" +{len(deps) - 3}"
             content += "[/]"
 
         yield Static(content)
@@ -129,10 +129,10 @@ class IssueDetail(Static):
             lines.append(f"[bold]Labels[/] {label_str}")
             lines.append("")
 
-        # Blockers
-        blockers = issue.get("blocked_by", [])
-        if blockers:
-            lines.append(f"[bold yellow]Blocked By[/] {', '.join(blockers)}")
+        # Dependencies
+        deps = issue.get("depends_on", [])
+        if deps:
+            lines.append(f"[bold yellow]Depends On[/] {', '.join(deps)}")
             lines.append("")
 
         # Notes
@@ -242,12 +242,12 @@ class IssuesBoardApp(App):
 
     BINDINGS = [
         Binding("q", "quit", "Quit"),
-        Binding("j", "next_issue", "Down", show=False),
-        Binding("k", "prev_issue", "Up", show=False),
-        Binding("h", "prev_column", "Left", show=False),
-        Binding("l", "next_column", "Right", show=False),
-        Binding("g", "go_top", "Top", show=False),
-        Binding("G", "go_bottom", "Bottom", show=False),
+        Binding("j", "next_issue", "Down"),
+        Binding("k", "prev_issue", "Up"),
+        Binding("h", "prev_column", "Left"),
+        Binding("l", "next_column", "Right"),
+        Binding("g", "go_top", "Top"),
+        Binding("G", "go_bottom", "Bottom"),
         Binding("r", "refresh", "Refresh"),
     ]
 
@@ -291,9 +291,9 @@ class IssuesBoardApp(App):
             if issue["status"] == "closed":
                 closed.append(issue)
             else:
-                blockers = set(issue.get("blocked_by", []))
-                open_blockers = blockers & open_ids
-                if open_blockers:
+                deps = set(issue.get("depends_on", []))
+                unsatisfied_deps = deps & open_ids
+                if unsatisfied_deps:
                     blocked.append(issue)
                 else:
                     ready.append(issue)

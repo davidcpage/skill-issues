@@ -152,10 +152,10 @@ class SessionsApp(App):
 
     BINDINGS = [
         Binding("q", "quit", "Quit"),
-        Binding("j", "cursor_down", "Down", show=False),
-        Binding("k", "cursor_up", "Up", show=False),
-        Binding("g", "go_top", "Top", show=False),
-        Binding("G", "go_bottom", "Bottom", show=False),
+        Binding("j", "cursor_down", "Down"),
+        Binding("k", "cursor_up", "Up"),
+        Binding("g", "go_top", "Top"),
+        Binding("G", "go_bottom", "Bottom"),
         Binding("/", "search", "Search"),
         Binding("escape", "clear_search", "Clear", show=False),
     ]
