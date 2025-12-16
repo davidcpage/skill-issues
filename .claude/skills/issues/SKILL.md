@@ -22,8 +22,12 @@ Events are stored in `.issues/events.jsonl` (project root) - one JSON event per 
 ```bash
 # Reading
 python3 issues.py              # Open issues (default)
+python3 issues.py --open       # Open issues (explicit)
+python3 issues.py --closed     # Closed issues
 python3 issues.py --ready      # Open and not blocked
 python3 issues.py --all        # All issues including closed
+python3 issues.py ID           # Show single issue
+python3 issues.py --show ID    # Show single issue (explicit)
 python3 issues.py --diagram    # Mermaid dependency diagram
 python3 issues.py --diagram ascii  # ASCII dependency diagram
 
@@ -79,15 +83,23 @@ Four event types:
 ```bash
 # Open issues (default)
 python3 issues.py
+python3 issues.py --open       # explicit form
+
+# Closed issues
+python3 issues.py --closed
 
 # Ready issues (open and not blocked by other open issues)
 python3 issues.py --ready
 
 # All issues including closed
 python3 issues.py --all
+
+# Show single issue by ID
+python3 issues.py 053          # shorthand
+python3 issues.py --show 053   # explicit form
 ```
 
-Output is JSON array sorted by priority, then ID.
+Output is JSON array sorted by priority, then ID (except single issue which returns object).
 
 ## Creating Issues
 

@@ -7,9 +7,12 @@ Also supports writing events via --create, --close, --note, --block, and --unblo
 
 Usage:
     python3 .claude/skills/issues/issues.py              # Open issues (default)
+    python3 .claude/skills/issues/issues.py --open       # Open issues (explicit)
+    python3 .claude/skills/issues/issues.py --closed     # Closed issues
     python3 .claude/skills/issues/issues.py --all        # All issues
     python3 .claude/skills/issues/issues.py --ready      # Open and not blocked
-    python3 .claude/skills/issues/issues.py --show ID    # Show single issue details
+    python3 .claude/skills/issues/issues.py ID           # Show single issue
+    python3 .claude/skills/issues/issues.py --show ID    # Show single issue (explicit)
     python3 .claude/skills/issues/issues.py --create "Title" [options]
     python3 .claude/skills/issues/issues.py --close ID "Reason"
     python3 .claude/skills/issues/issues.py --note ID "Content"
@@ -95,6 +98,11 @@ def filter_open(issues):
     return {k: v for k, v in issues.items() if v["status"] == "open"}
 
 
+def filter_closed(issues):
+    """Return only closed issues."""
+    return {k: v for k, v in issues.items() if v["status"] == "closed"}
+
+
 def filter_ready(issues, all_issues):
     """Return open issues not blocked by other open issues."""
     open_ids = set(filter_open(all_issues).keys())
@@ -132,6 +140,7 @@ def append_event(event):
         if needs_newline:
             f.write("\n")
         f.write(json.dumps(event, separators=(",", ":")) + "\n")
+        f.flush()
 
 
 def create_issue(title, issue_type="task", priority=2, description="", blocked_by=None, labels=None):
@@ -430,9 +439,14 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
+    # Positional argument for issue ID (implicit --show)
+    parser.add_argument("issue_id", nargs="?", metavar="ID", help="Issue ID to show (shorthand for --show)")
+
     # Query flags (mutually exclusive with write commands)
     query_group = parser.add_mutually_exclusive_group()
     query_group.add_argument("--all", action="store_true", help="Show all issues including closed")
+    query_group.add_argument("--open", action="store_true", help="Show all open issues (default)")
+    query_group.add_argument("--closed", action="store_true", help="Show closed issues")
     query_group.add_argument("--ready", action="store_true", help="Show open issues not blocked")
     query_group.add_argument("--show", metavar="ID", help="Show details of a single issue")
     query_group.add_argument("--diagram", nargs="?", const="mermaid", choices=["mermaid", "ascii"],
@@ -464,15 +478,19 @@ def main():
     if args.create:
         blocked_by = parse_list_arg(args.blocked_by)
         labels = parse_list_arg(args.labels)
-        new_id = create_issue(
-            title=args.create,
-            issue_type=args.type,
-            priority=args.priority,
-            description=args.description,
-            blocked_by=blocked_by,
-            labels=labels,
-        )
-        print(json.dumps({"created": new_id}))
+        try:
+            new_id = create_issue(
+                title=args.create,
+                issue_type=args.type,
+                priority=args.priority,
+                description=args.description,
+                blocked_by=blocked_by,
+                labels=labels,
+            )
+            print(json.dumps({"created": new_id}))
+        except Exception as e:
+            print(json.dumps({"error": str(e)}), file=sys.stderr)
+            sys.exit(1)
         return
 
     if args.close:
@@ -526,13 +544,13 @@ def main():
     # Handle query commands
     all_issues = load_issues()
 
-    # Handle --show single issue
-    if args.show:
-        issue_id = args.show
-        if issue_id not in all_issues:
-            print(json.dumps({"error": f"Issue {issue_id} not found"}), file=sys.stderr)
+    # Handle --show or positional issue_id (both show a single issue)
+    show_id = args.show or args.issue_id
+    if show_id:
+        if show_id not in all_issues:
+            print(json.dumps({"error": f"Issue {show_id} not found"}), file=sys.stderr)
             sys.exit(1)
-        print(json.dumps(all_issues[issue_id], indent=2))
+        print(json.dumps(all_issues[show_id], indent=2))
         return
 
     # Handle diagram output
@@ -546,9 +564,12 @@ def main():
 
     if args.all:
         output = all_issues
+    elif args.closed:
+        output = filter_closed(all_issues)
     elif args.ready:
         output = filter_ready(all_issues, all_issues)
     else:
+        # Default (no flags or --open): show open issues
         output = filter_open(all_issues)
 
     # Sort by priority, then by id
