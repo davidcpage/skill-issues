@@ -14,23 +14,40 @@ def parse_list_arg(value: str) -> list[str] | None:
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
+def looks_like_issue_id(arg: str) -> bool:
+    """Check if an argument looks like an issue ID (3-digit number)."""
+    return arg.isdigit() and len(arg) == 3
+
+
 def main() -> int:
     """Entry point for the issues command."""
+    # Check if first positional argument looks like an issue ID
+    # If so, don't add subparsers to avoid conflict
+    has_issue_id_arg = False
+    for arg in sys.argv[1:]:
+        if arg.startswith("-"):
+            continue
+        # First positional argument found
+        if looks_like_issue_id(arg):
+            has_issue_id_arg = True
+        break
+
     parser = argparse.ArgumentParser(
         description="Append-only issue tracker",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    # Subcommands
-    subparsers = parser.add_subparsers(dest="subcommand")
-    subparsers.add_parser("board", help="Open interactive Kanban board TUI")
+    # Only add subcommands if we're not handling issue IDs
+    if not has_issue_id_arg:
+        subparsers = parser.add_subparsers(dest="subcommand")
+        subparsers.add_parser("board", help="Open interactive Kanban board TUI")
 
-    init_parser = subparsers.add_parser("init", help="Initialize skills in a project")
-    init_parser.add_argument("path", nargs="?", help="Project path (default: current directory)")
-    init_parser.add_argument("--all", "-a", action="store_true", help="Install all skills (issues, sessions, adr)")
+        init_parser = subparsers.add_parser("init", help="Initialize skills in a project")
+        init_parser.add_argument("path", nargs="?", help="Project path (default: current directory)")
+        init_parser.add_argument("--all", "-a", action="store_true", help="Install all skills (issues, sessions, adr)")
 
-    # Positional argument for issue ID (implicit --show)
-    parser.add_argument("issue_id", nargs="?", metavar="ID", help="Issue ID to show (shorthand for --show)")
+    # Positional argument for issue ID(s) (implicit --show)
+    parser.add_argument("issue_ids", nargs="*", metavar="ID", help="Issue ID(s) to show (shorthand for --show)")
 
     # Query flags (mutually exclusive with write commands)
     query_group = parser.add_mutually_exclusive_group()
@@ -65,12 +82,13 @@ def main() -> int:
     args = parser.parse_args()
 
     # Handle subcommands
-    if args.subcommand == "board":
+    subcommand = getattr(args, "subcommand", None)
+    if subcommand == "board":
         from . import tui
         tui.run_app()
         return 0
 
-    if args.subcommand == "init":
+    if subcommand == "init":
         from .. import init as init_module
         if getattr(args, "all", False):
             skills = ["issues", "sessions", "adr"]
@@ -148,13 +166,28 @@ def main() -> int:
     # Handle query commands
     all_issues = store.load_issues()
 
-    # Handle --show or positional issue_id (both show a single issue)
-    show_id = args.show or args.issue_id
-    if show_id:
-        if show_id not in all_issues:
-            print(json.dumps({"error": f"Issue {show_id} not found"}), file=sys.stderr)
+    # Handle --show (single issue)
+    if args.show:
+        if args.show not in all_issues:
+            print(json.dumps({"error": f"Issue {args.show} not found"}), file=sys.stderr)
             return 1
-        print(json.dumps(all_issues[show_id], indent=2))
+        print(json.dumps(all_issues[args.show], indent=2))
+        return 0
+
+    # Handle positional issue IDs (one or more)
+    if args.issue_ids:
+        # Check all IDs exist first
+        missing = [id for id in args.issue_ids if id not in all_issues]
+        if missing:
+            print(json.dumps({"error": f"Issue(s) not found: {', '.join(missing)}"}), file=sys.stderr)
+            return 1
+        # Single ID: return object (backward compatible)
+        if len(args.issue_ids) == 1:
+            print(json.dumps(all_issues[args.issue_ids[0]], indent=2))
+        else:
+            # Multiple IDs: return array
+            results = [all_issues[id] for id in args.issue_ids]
+            print(json.dumps(results, indent=2))
         return 0
 
     # Handle diagram output
