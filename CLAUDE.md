@@ -90,20 +90,18 @@ Data directories are created automatically on first use.
 
 ## Development Notes
 
+### Editable install
+
+For development, use an editable install so changes are reflected immediately:
+
+```bash
+uv tool install -e .
+```
+
 ### Testing imports
 
 Use `uv run python` to test Python imports during development:
 
 ```bash
 uv run python -c "from skill_issues.issues import tui; print('OK')"
-```
-
-### Reinstalling after changes
-
-When developing locally, `uv tool install` caches built packages. If changes aren't reflected after reinstall:
-
-```bash
-uv tool uninstall skill-issues
-uv cache clean
-uv tool install .
 ```
