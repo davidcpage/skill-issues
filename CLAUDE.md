@@ -71,7 +71,17 @@ The CLI tools are installed globally via `uv tool install`, so they work in any 
 
 Data directories (`.issues/`, `.memory/`, `.decisions/`) are created automatically on first use.
 
-## Development Note
+## Development Notes
+
+### Testing imports
+
+Use `uv run python` to test Python imports during development:
+
+```bash
+uv run python -c "from skill_issues.issues import tui; print('OK')"
+```
+
+### Reinstalling after changes
 
 When developing locally, `uv tool install` caches built packages. If changes aren't reflected after reinstall:
 

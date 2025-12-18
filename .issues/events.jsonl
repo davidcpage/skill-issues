@@ -168,3 +168,5 @@
 {"ts":"2025-12-16T16:42:34Z","type":"closed","id":"078","reason":"Added adr CLI with init subcommand. Minimal CLI that only handles skill initialization."}
 {"ts":"2025-12-16T17:43:59Z","type":"closed","id":"070","reason":"Published skill-issues v0.1.0 to PyPI"}
 {"ts":"2025-12-16T18:15:18Z","type":"closed","id":"071","reason":"Implemented multiple issue ID support in positional arguments"}
+{"ts":"2025-12-18T14:52:05Z","type":"created","id":"079","title":"TUI board scroll should follow focused card","issue_type":"bug","priority":3,"description":"When navigating up/down in issues board (and likely sessions board), selecting a card that is off-screen doesn't trigger scroll to keep the focused card visible. Expected: viewport should scroll to keep the currently focused card on screen."}
+{"ts":"2025-12-18T14:54:06Z","type":"closed","id":"079","reason":"Fixed - added scroll_visible() call in _update_selection() at issues/tui.py:361-362. When a card is selected via j/k navigation, it now scrolls into view. Sessions board uses ListView which handles scrolling automatically."}

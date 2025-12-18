@@ -345,6 +345,7 @@ class IssuesBoardApp(App):
             "closed": "#closed-column",
         }
 
+        selected_card = None
         for col_idx, col_id in enumerate(self.columns):
             column = self.query_one(column_map[col_id], KanbanColumn)
             cards = list(column.query(IssueCard))
@@ -353,6 +354,12 @@ class IssuesBoardApp(App):
             for i, card in enumerate(cards):
                 is_selected = (col_idx == self.current_column) and (i == current_idx)
                 card.update_selection(is_selected)
+                if is_selected:
+                    selected_card = card
+
+        # Scroll the selected card into view
+        if selected_card is not None:
+            selected_card.scroll_visible()
 
         # Update detail panel
         self._update_detail()
