@@ -45,6 +45,34 @@ def main() -> int:
         init_parser = subparsers.add_parser("init", help="Initialize skills in a project")
         init_parser.add_argument("path", nargs="?", help="Project path (default: current directory)")
         init_parser.add_argument("--all", "-a", action="store_true", help="Install all skills (issues, sessions, adr)")
+        init_parser.add_argument("--update", "-u", action="store_true", help="Overwrite existing SKILL.md files")
+
+        # Write subcommands (aliases for --create, --close, --note, etc.)
+        create_parser = subparsers.add_parser("create", help="Create a new issue")
+        create_parser.add_argument("title", help="Issue title")
+        create_parser.add_argument("--type", "-t", choices=["bug", "feature", "task"], default="task",
+                                   help="Issue type (default: task)")
+        create_parser.add_argument("--priority", "-p", type=int, choices=[0, 1, 2, 3, 4], default=2,
+                                   help="Priority 0=critical to 4=backlog (default: 2)")
+        create_parser.add_argument("--description", "-d", default="", help="Issue description")
+        create_parser.add_argument("--depends-on", "-b", default="", help="Comma-separated dependency IDs")
+        create_parser.add_argument("--labels", "-l", default="", help="Comma-separated labels")
+
+        close_parser = subparsers.add_parser("close", help="Close an issue")
+        close_parser.add_argument("id", help="Issue ID to close")
+        close_parser.add_argument("reason", help="Reason for closing")
+
+        note_parser = subparsers.add_parser("note", help="Add a note to an issue")
+        note_parser.add_argument("id", help="Issue ID")
+        note_parser.add_argument("content", help="Note content")
+
+        add_dep_parser = subparsers.add_parser("add-dep", help="Add dependencies to an issue")
+        add_dep_parser.add_argument("id", help="Issue ID")
+        add_dep_parser.add_argument("dep_ids", help="Comma-separated dependency IDs to add")
+
+        remove_dep_parser = subparsers.add_parser("remove-dep", help="Remove dependencies from an issue")
+        remove_dep_parser.add_argument("id", help="Issue ID")
+        remove_dep_parser.add_argument("dep_ids", help="Comma-separated dependency IDs to remove")
 
     # Positional argument for issue ID(s) (implicit --show)
     parser.add_argument("issue_ids", nargs="*", metavar="ID", help="Issue ID(s) to show (shorthand for --show)")
@@ -94,9 +122,75 @@ def main() -> int:
             skills = ["issues", "sessions", "adr"]
         else:
             skills = ["issues"]
-        return init_module.run_init(skills, getattr(args, "path", None))
+        return init_module.run_init(
+            skills,
+            getattr(args, "path", None),
+            update=getattr(args, "update", False),
+        )
 
-    # Handle write commands
+    if subcommand == "create":
+        depends_on = parse_list_arg(getattr(args, "depends_on", ""))
+        labels = parse_list_arg(getattr(args, "labels", ""))
+        try:
+            new_id = store.create_issue(
+                title=args.title,
+                issue_type=getattr(args, "type", "task"),
+                priority=getattr(args, "priority", 2),
+                description=getattr(args, "description", ""),
+                depends_on=depends_on,
+                labels=labels,
+            )
+            print(json.dumps({"created": new_id}))
+        except Exception as e:
+            print(json.dumps({"error": str(e)}), file=sys.stderr)
+            return 1
+        return 0
+
+    if subcommand == "close":
+        try:
+            store.close_issue(args.id, args.reason)
+            print(json.dumps({"closed": args.id}))
+        except ValueError as e:
+            print(json.dumps({"error": str(e)}), file=sys.stderr)
+            return 1
+        return 0
+
+    if subcommand == "note":
+        try:
+            store.add_note(args.id, args.content)
+            print(json.dumps({"noted": args.id}))
+        except ValueError as e:
+            print(json.dumps({"error": str(e)}), file=sys.stderr)
+            return 1
+        return 0
+
+    if subcommand == "add-dep":
+        dep_ids = parse_list_arg(args.dep_ids)
+        if not dep_ids:
+            print(json.dumps({"error": "No dependency IDs provided"}), file=sys.stderr)
+            return 1
+        try:
+            added = store.add_dependency(args.id, dep_ids)
+            print(json.dumps({"issue": args.id, "added_deps": added}))
+        except ValueError as e:
+            print(json.dumps({"error": str(e)}), file=sys.stderr)
+            return 1
+        return 0
+
+    if subcommand == "remove-dep":
+        dep_ids = parse_list_arg(args.dep_ids)
+        if not dep_ids:
+            print(json.dumps({"error": "No dependency IDs provided"}), file=sys.stderr)
+            return 1
+        try:
+            removed = store.remove_dependency(args.id, dep_ids)
+            print(json.dumps({"issue": args.id, "removed_deps": removed}))
+        except ValueError as e:
+            print(json.dumps({"error": str(e)}), file=sys.stderr)
+            return 1
+        return 0
+
+    # Handle write commands (flag syntax - kept for backward compatibility)
     if args.create:
         depends_on = parse_list_arg(args.depends_on)
         labels = parse_list_arg(args.labels)

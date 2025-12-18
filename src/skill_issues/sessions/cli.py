@@ -27,6 +27,7 @@ Examples:
     # Subcommands
     parser.add_argument("command", nargs="?", choices=["board", "init"], help="Subcommand: board (TUI), init (setup skill)")
     parser.add_argument("init_path", nargs="?", help="Project path for init (default: current directory)")
+    parser.add_argument("--update", "-u", action="store_true", help="Overwrite existing SKILL.md files (for init)")
 
     # Query options (mutually exclusive group)
     query = parser.add_mutually_exclusive_group()
@@ -67,7 +68,7 @@ Examples:
     # Handle init subcommand
     if args.command == "init":
         from .. import init as init_module
-        return init_module.run_init(["sessions"], args.init_path)
+        return init_module.run_init(["sessions"], args.init_path, update=args.update)
 
     # Handle create command
     if args.create:

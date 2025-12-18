@@ -47,19 +47,34 @@ def _is_editable_install() -> bool:
     return repo_skills.exists() and repo_skills.is_dir()
 
 
-def install_skill(project_dir: Path, skill_name: str) -> str:
+def install_skill(project_dir: Path, skill_name: str, update: bool = False) -> str:
     """Install a skill to the project directory.
 
     Uses symlinks for editable installs (git clone), copies for wheel installs.
     Returns a status message.
+
+    Args:
+        project_dir: Path to the project directory.
+        skill_name: Name of the skill to install.
+        update: If True, overwrite existing SKILL.md files (does not affect symlinks).
     """
     target_dir = project_dir / ".claude" / "skills" / skill_name
+    target_file = target_dir / "SKILL.md"
 
     # Check if already exists
     if target_dir.exists():
         if target_dir.is_symlink():
-            return f"{skill_name}: already linked"
-        return f"{skill_name}: already exists"
+            return f"{skill_name}: already linked (symlinks auto-update)"
+
+        if not update:
+            return f"{skill_name}: already exists (use --update to overwrite SKILL.md)"
+
+        # Update mode: overwrite the SKILL.md file
+        content = get_skill_content(skill_name)
+        if content is None:
+            return f"{skill_name}: not found in package"
+        target_file.write_text(content)
+        return f"{skill_name}: updated SKILL.md"
 
     # For editable installs, use symlinks
     if _is_editable_install():
@@ -79,7 +94,7 @@ def install_skill(project_dir: Path, skill_name: str) -> str:
 
     # Create directory and write file
     target_dir.mkdir(parents=True, exist_ok=True)
-    (target_dir / "SKILL.md").write_text(content)
+    target_file.write_text(content)
     return f"{skill_name}: installed"
 
 
@@ -126,12 +141,13 @@ def update_permissions(project_dir: Path, skill_names: list[str]) -> str:
         return f"permissions: created settings.json"
 
 
-def init_skills(project_dir: Path, skill_names: list[str]) -> list[str]:
+def init_skills(project_dir: Path, skill_names: list[str], update: bool = False) -> list[str]:
     """Initialize skills in a project directory.
 
     Args:
         project_dir: Path to the project directory.
         skill_names: List of skill names to install.
+        update: If True, overwrite existing SKILL.md files.
 
     Returns:
         List of status messages.
@@ -143,7 +159,7 @@ def init_skills(project_dir: Path, skill_names: list[str]) -> list[str]:
         if skill not in SKILLS:
             messages.append(f"{skill}: unknown skill")
             continue
-        messages.append(install_skill(project_dir, skill))
+        messages.append(install_skill(project_dir, skill, update=update))
 
     # Update permissions
     messages.append(update_permissions(project_dir, skill_names))
@@ -151,12 +167,13 @@ def init_skills(project_dir: Path, skill_names: list[str]) -> list[str]:
     return messages
 
 
-def run_init(skill_names: list[str], project_path: str | None = None) -> int:
+def run_init(skill_names: list[str], project_path: str | None = None, update: bool = False) -> int:
     """Run init from CLI.
 
     Args:
         skill_names: List of skill names to install.
         project_path: Path to project (default: current directory).
+        update: If True, overwrite existing SKILL.md files.
 
     Returns:
         Exit code (0 for success).
@@ -168,10 +185,13 @@ def run_init(skill_names: list[str], project_path: str | None = None) -> int:
         return 1
 
     project_dir = project_dir.resolve()
-    print(f"Initializing in: {project_dir}")
+    if update:
+        print(f"Updating SKILL.md files in: {project_dir}")
+    else:
+        print(f"Initializing in: {project_dir}")
     print()
 
-    messages = init_skills(project_dir, skill_names)
+    messages = init_skills(project_dir, skill_names, update=update)
     for msg in messages:
         print(f"  {msg}")
 

@@ -33,7 +33,8 @@ This provides global `issues` and `sessions` commands that work in any project d
 
 **Issues CLI:**
 - `issues --open` / `issues --ready` / `issues --closed` - Query issues
-- `issues --create "Title"` / `issues --close ID "Reason"` - Manage issues
+- `issues create "Title"` / `issues close ID "Reason"` - Manage issues
+- `issues note ID "Content"` - Add notes to issues
 - `issues --diagram` - Visualize dependencies
 - `issues board` - Interactive Kanban TUI
 
@@ -60,16 +61,32 @@ Add to your project's `.claude/settings.json`:
 
 ### Using Skills in Other Projects
 
-Copy the skill directories to register the skills with Claude Code:
+Use `issues init` to set up skills in any project:
 
 ```bash
-# Copy skill definitions (SKILL.md files only)
-cp -r .claude/skills/issues .claude/skills/sessions .claude/skills/adr /path/to/your/project/.claude/skills/
+# In the target project directory
+issues init --all           # Install all skills (issues, sessions, adr)
+issues init                  # Install just issues skill
+sessions init                # Install just sessions skill
 ```
 
-The CLI tools are installed globally via `uv tool install`, so they work in any project once installed.
+This copies SKILL.md files and configures permissions in `.claude/settings.json`.
 
-Data directories (`.issues/`, `.memory/`, `.decisions/`) are created automatically on first use.
+### Updating Skills
+
+When skill-issues is updated, refresh SKILL.md files in your projects:
+
+```bash
+# First update the CLI tool
+uv tool install --upgrade skill-issues
+
+# Then update SKILL.md files in your project
+issues init --all --update
+```
+
+The `--update` flag overwrites existing SKILL.md files with the latest versions. It only affects documentation - your data (`.issues/`, `.memory/`, `.decisions/`) is never modified.
+
+Data directories are created automatically on first use.
 
 ## Development Notes
 

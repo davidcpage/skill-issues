@@ -31,11 +31,11 @@ issues --diagram          # Mermaid dependency diagram
 issues --diagram ascii    # ASCII dependency diagram
 
 # Writing
-issues --create "Title" [options]
-issues --close ID "Reason"
-issues --note ID "Content"
-issues --add-dep ID "DEP_IDS"
-issues --remove-dep ID "DEP_IDS"
+issues create "Title" [options]
+issues close ID "Reason"
+issues note ID "Content"
+issues add-dep ID "DEP_IDS"
+issues remove-dep ID "DEP_IDS"
 
 # TUI
 issues board              # Kanban board view
@@ -106,7 +106,7 @@ Output is JSON array sorted by priority, then ID (except single issue which retu
 ## Creating Issues
 
 ```bash
-issues --create "Title" [options]
+issues create "Title" [options]
 ```
 
 **Options:**
@@ -119,14 +119,14 @@ issues --create "Title" [options]
 **Examples:**
 ```bash
 # Simple task
-issues --create "Fix login timeout"
+issues create "Fix login timeout"
 
 # Bug with details
-issues --create "API returns 500 on empty input" \
+issues create "API returns 500 on empty input" \
   -t bug -p 1 -d "Discovered when testing edge cases"
 
 # Feature blocked by other work
-issues --create "Add export to CSV" \
+issues create "Add export to CSV" \
   -t feature -b 014,015 -l "needs-review"
 ```
 
@@ -135,12 +135,12 @@ Returns `{"created": "036"}` with the new issue ID.
 ## Adding Notes
 
 ```bash
-issues --note ID "Content"
+issues note ID "Content"
 ```
 
 **Example:**
 ```bash
-issues --note 015 "User clarified: they want CSV format, not JSON"
+issues note 015 "User clarified: they want CSV format, not JSON"
 ```
 
 **When to add notes:**
@@ -157,10 +157,10 @@ Add or remove dependencies from existing issues:
 
 ```bash
 # Add dependencies (comma-separated IDs)
-issues --add-dep 014 "012,013"
+issues add-dep 014 "012,013"
 
 # Remove dependencies
-issues --remove-dep 014 "012"
+issues remove-dep 014 "012"
 ```
 
 Returns `{"issue": "014", "added_deps": ["012", "013"]}` or `{"issue": "014", "removed_deps": ["012"]}`.
@@ -185,12 +185,12 @@ For other mutable fields (`priority`, `labels`), use the Edit tool to append an 
 ## Closing Issues
 
 ```bash
-issues --close ID "Reason"
+issues close ID "Reason"
 ```
 
 **Example:**
 ```bash
-issues --close 015 "Done - implemented CSV export with unicode support"
+issues close 015 "Done - implemented CSV export with unicode support"
 ```
 
 Returns `{"closed": "015"}` on success.
