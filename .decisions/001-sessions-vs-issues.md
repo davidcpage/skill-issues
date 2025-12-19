@@ -37,12 +37,12 @@ These track **orthogonal dimensions**:
 
 Example from our data:
 ```
-Session s006 ──┬── Issue 005 (closed in s006)
-               ├── Issue 014 (created in s006, still open)
-               ├── Issue 015 (created in s006, still open)
-               └── Issue 016 (created in s006, still open)
+Session dp-s006 ──┬── Issue dp-005 (closed in dp-s006)
+               ├── Issue dp-014 (created in dp-s006, still open)
+               ├── Issue dp-015 (created in dp-s006, still open)
+               └── Issue dp-016 (created in dp-s006, still open)
 
-Issue 017 was created and closed entirely within s007
+Issue dp-017 was created and closed entirely within dp-s007
 ```
 
 ### Arguments for Keeping Separate
@@ -85,12 +85,12 @@ The overlap where `next_actions` sometimes become issues is actually healthy: se
 
 1. Continue maintaining both `.memory/` and `.issues/` systems
 2. Use bidirectional linking when relevant (not mandatory)
-3. Deprioritize issue 014 (session tooling) and 015 (field granularity) unless real pain emerges
+3. Deprioritize issue dp-014 (session tooling) and 015 (field granularity) unless real pain emerges
 4. Accept minor cognitive overhead as cost of cleaner separation of concerns
 
 ---
 
-## Evolution: One-Way Dependency (Issue 018)
+## Evolution: One-Way Dependency (Issue dp-018)
 
 **Date:** 2025-12-13
 **Issue:** 018
@@ -104,7 +104,7 @@ The original decision allowed bidirectional linking (`issues_worked` in sessions
 | **Scope** | Multi-user, shared via git | Single-user, personal |
 | **Sync** | Collaborative | Local only |
 
-If I create issue 017 with `session: "s008"` and you sync via git, that reference is meaningless to you - you don't have my session s008.
+If I create issue dp-017 with `session: "dp-s008"` and you sync via git, that reference is meaningless to you - you don't have my session dp-s008.
 
 ### Refined Decision
 
@@ -117,7 +117,7 @@ This keeps issues as clean, portable, shareable units while sessions remain pers
 
 ### Querying Still Works
 
-"Show all sessions that worked on issue 017":
+"Show all sessions that worked on issue dp-017":
 ```bash
 jq -s '.[] | select(.issues_worked | contains(["017"]))' .memory/sessions.jsonl
 ```

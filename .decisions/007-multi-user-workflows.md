@@ -46,11 +46,11 @@ To customize: git config --global skill-issues.prefix "yourprefix"
 
 ### Session Changes
 
-**ID format change:** `s001` → `dp-s001`
+**ID format change:** `dp-s001` → `dp-dp-s001`
 
 Sessions gain a `user` field matching the prefix:
 ```json
-{"id": "dp-s001", "user": "dp", "date": "2025-12-19", "topic": "...", ...}
+{"id": "dp-dp-s001", "user": "dp", "date": "2025-12-19", "topic": "...", ...}
 ```
 
 **Filtering behavior:**
@@ -58,7 +58,7 @@ Sessions gain a `user` field matching the prefix:
 - `sessions --all` - Shows all users' sessions
 - `sessions board` - Tabs per user: current user first (selected by default), other users alphabetically, "All" tab last
 
-**ID generation:** `next_session_id()` generates IDs scoped to user prefix, e.g., if `dp-s003` exists, next is `dp-s004`.
+**ID generation:** `next_session_id()` generates IDs scoped to user prefix, e.g., if `dp-dp-s003` exists, next is `dp-dp-s004`.
 
 **Pairing:** Sessions remain single-user. If two people pair, each creates their own session reflecting on the same work. Different perspectives are valuable, and this avoids complexity of multi-author filtering.
 
@@ -70,7 +70,7 @@ Sessions gain a `user` field matching the prefix:
 {"ts": "...", "type": "created", "id": "dp-001", "title": "...", ...}
 ```
 
-The hyphen separator improves readability and matches the session format (`dp-s001`).
+The hyphen separator improves readability and matches the session format (`dp-dp-s001`).
 
 **No filtering by default** - Issues are shared work items, not personal. All users see all issues.
 
@@ -102,7 +102,7 @@ The `adr accept` command:
 
 ### Migration Strategy
 
-Existing repositories have unnumbered sessions (`s001`) and issues (`001`). Given there are only ~3 existing projects:
+Existing repositories have unnumbered sessions (`dp-s001`) and issues (`001`). Given there are only ~3 existing projects:
 
 - **Manual migration** is acceptable
 - Add user prefix to existing IDs in the JSONL files
@@ -122,7 +122,7 @@ No automated migration tooling is planned unless adoption grows significantly.
 
 ### Negative
 
-- **Longer IDs** - `dp-001` vs `001`, `dp-s001` vs `s001` (minor, ~3-5 chars)
+- **Longer IDs** - `dp-001` vs `001`, `dp-dp-s001` vs `dp-s001` (minor, ~3-5 chars)
 - **Loses global ordering** - Can't tell at a glance that `jb-003` came after `dp-002` (use timestamps for ordering)
 - **Migration needed** - Existing repos need manual ID updates
 - **Prefix coordination** - Team members need unique prefixes (but 2-letter initials rarely collide for ~5 people)
@@ -153,15 +153,15 @@ Rejected: High complexity, low frequency need. Slug preservation + search is suf
 
 ## Related Issues
 
-- 080: Add get_user_prefix() utility function (foundation)
-- 081: Update session ID format to include user prefix
-- 082: Add --all flag for cross-user session viewing
-- 083: Add user filtering to sessions board TUI
-- 084: Update issue ID format to include user prefix
-- 085: Add draft ADR naming convention
-- 086: Add adr accept command
-- 087: Update SKILL.md files for multi-user workflows
-- 088: Add first-run prefix derivation hint
+- dp-080: Add get_user_prefix() utility function (foundation)
+- dp-081: Update session ID format to include user prefix
+- dp-082: Add --all flag for cross-user session viewing
+- dp-083: Add user filtering to sessions board TUI
+- dp-084: Update issue ID format to include user prefix
+- dp-085: Add draft ADR naming convention
+- dp-086: Add adr accept command
+- dp-087: Update SKILL.md files for multi-user workflows
+- dp-088: Add first-run prefix derivation hint
 
 ## Resolved Questions
 

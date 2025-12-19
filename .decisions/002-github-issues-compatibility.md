@@ -4,7 +4,7 @@
 **Date:** 2025-12-14
 **Updated:** 2025-12-14
 
-**Hold rationale:** Full GitHub sync (Phases 2-4) adds complexity for marginal benefit. The ID mapping problem (local IDs ↔ GitHub numbers) is the main blocker. If GitHub visibility is needed, use GitHub as primary. Phase 1 schema additions (labels field) worth doing independently - see issue 032.
+**Hold rationale:** Full GitHub sync (Phases 2-4) adds complexity for marginal benefit. The ID mapping problem (local IDs ↔ GitHub numbers) is the main blocker. If GitHub visibility is needed, use GitHub as primary. Phase 1 schema additions (labels field) worth doing independently - see issue dp-032.
 
 ## Framing
 
@@ -194,7 +194,7 @@ By aligning with GitHub Issues semantics, we leverage this statistical prior. Th
 
 **Decision:** Skip task list integration. Task lists (`- [ ] item`) are just markdown in descriptions, with no special tooling.
 
-**Context:** GitHub task lists render as interactive checkboxes with completion tracking. Issue 026 proposed similar integration for protocol fitness benefits.
+**Context:** GitHub task lists render as interactive checkboxes with completion tracking. Issue dp-026 proposed similar integration for protocol fitness benefits.
 
 **Rationale:**
 1. **Avoids two mechanisms for the same thing:** Both `blocked_by` and task lists can express "do A before B". Having both creates confusion about when to use which.

@@ -64,7 +64,7 @@ Adopt conventions without strict enforcement:
 
 **Status:** Draft | Accepted | Superseded by NNN
 **Date:** YYYY-MM-DD
-**Related Issues:** #024, #025
+**Related Issues:** #dp-024, #dp-025
 
 ## Summary
 One paragraph overview.
@@ -135,7 +135,7 @@ Design docs and issues serve different purposes:
 
 **Linking conventions:**
 - Issues can reference decisions: "See .decisions/002-... for design"
-- Decisions can list related issues: "Related Issues: #024, #025"
+- Decisions can list related issues: "Related Issues: #dp-024, #dp-025"
 - Implementation issues should reference the decision they implement
 
 This is one-way dependency like sessions→issues: decisions are the stable artifact, issues reference them.
@@ -212,5 +212,5 @@ Key decisions:
 
 ## Related Issues
 
-- #028: Research existing local-first issue trackers (may find design doc patterns)
-- #029: Finalize design doc process conventions (closed by this acceptance)
+- #dp-028: Research existing local-first issue trackers (may find design doc patterns)
+- #dp-029: Finalize design doc process conventions (closed by this acceptance)

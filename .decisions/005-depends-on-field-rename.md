@@ -75,5 +75,5 @@ A migration script could rewrite `events.jsonl` to use `depends_on`, but this is
 
 ## References
 
-- Issue 073: Rename blocked_by field to depends_on
+- Issue dp-073: Rename blocked_by field to depends_on
 - ADR 002: Documents `blocked_by` as structural field (D2)

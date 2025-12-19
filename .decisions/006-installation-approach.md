@@ -121,6 +121,6 @@ issues init --all /path/to/your/project
 ## Related
 
 - ADR 004: CLI and TUI Package
-- Issue 076: Add init subcommand to issues CLI
-- Issue 077: Add init subcommand to sessions CLI
-- Issue 078: Add minimal adr CLI with init subcommand
+- Issue dp-076: Add init subcommand to issues CLI
+- Issue dp-077: Add init subcommand to sessions CLI
+- Issue dp-078: Add minimal adr CLI with init subcommand
