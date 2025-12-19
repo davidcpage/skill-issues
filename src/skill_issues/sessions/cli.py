@@ -14,13 +14,14 @@ def main() -> int:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  sessions                         # Last session
+  sessions                         # Last session (current user)
   sessions board                   # Interactive TUI browser
-  sessions --last 3                # Last 3 sessions
+  sessions --last 3                # Last 3 sessions (current user)
+  sessions --last 5 --user all     # Last 5 sessions from all users
+  sessions --user xy               # Last session from user 'xy'
   sessions --open-questions        # All open questions
   sessions --create "feature-x" -l "Learned thing" -i "001,002"
   sessions --amend -l "Another learning"      # Amend last session
-  sessions --amend s041 -l "Learning"         # Amend specific session
 """
     )
 
@@ -46,6 +47,10 @@ Examples:
     # Amend command
     query.add_argument("--amend", nargs="?", const=True, metavar="ID",
                        help="Amend a session (last session if no ID given)")
+
+    # User filtering (orthogonal to query type)
+    parser.add_argument("--user", metavar="PREFIX",
+                        help="Filter by user prefix (default: current user, 'all' for everyone)")
 
     # Options for --create and --amend
     parser.add_argument("-l", "--learning", action="append", metavar="TEXT",
@@ -128,7 +133,15 @@ Examples:
         return 0
 
     # Query commands
-    sessions = store.load_sessions()
+    all_sessions = store.load_sessions()
+
+    # Apply user filtering (default: current user, --user all: everyone, --user X: specific user)
+    if args.user == "all":
+        sessions = all_sessions
+    elif args.user:
+        sessions = store.filter_by_user(all_sessions, args.user)
+    else:
+        sessions = store.filter_by_user(all_sessions)
 
     if not sessions:
         print("[]")

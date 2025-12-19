@@ -55,8 +55,11 @@ Sessions gain a `user` field matching the prefix:
 
 **Filtering behavior:**
 - `sessions` - Shows only current user's sessions (default)
-- `sessions --all` - Shows all users' sessions
+- `sessions --user all` - Shows all users' sessions
+- `sessions --user xy` - Shows specific user's sessions
 - `sessions board` - Tabs per user: current user first (selected by default), other users alphabetically, "All" tab last
+
+The `--user` flag is orthogonal to query type, so it combines with other flags: `sessions --last 5 --user all`.
 
 **ID generation:** `next_session_id()` generates IDs scoped to user prefix, e.g., if `dp-dp-s003` exists, next is `dp-dp-s004`.
 
@@ -129,7 +132,7 @@ No automated migration tooling is planned unless adoption grows significantly.
 
 ### Neutral
 
-- Sessions filtered by default may surprise users expecting to see teammate's sessions (mitigated by `--all` flag and clear messaging)
+- Sessions filtered by default may surprise users expecting to see teammate's sessions (mitigated by `--user all` flag and clear messaging)
 
 ## Alternatives Considered
 
@@ -172,3 +175,5 @@ Rejected: High complexity, low frequency need. Slug preservation + search is suf
 3. **Sessions board UI:** Tabs per user, ordered with current user first (selected by default), then other users alphabetically, then "All" tab last.
 
 4. **Blank prefix:** Not allowed. Prefix is required (2-4 chars). This ensures consistent ID formats everywhere and avoids parsing ambiguity between legacy `001` and new `dp001` formats. Existing repos migrate manually (only ~3 repos, simple JSONL edits).
+
+5. **Sessions user filtering API:** Use `--user PREFIX` flag rather than repurposing `--all`. Query type (which sessions: `--all`, `--last N`, `--issue ID`, `--topic X`) and user scope (`--user`) are orthogonal dimensions. The `--user` flag mirrors GitHub CLI patterns (e.g., `gh pr list --author`), making it discoverable for both human users and Claude agents familiar with gh conventions.

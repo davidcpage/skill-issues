@@ -141,3 +141,68 @@ class TestFilterByUser:
         result = filter_by_user(sessions, user="dp")
         assert len(result) == 1
         assert result[0]["id"] == "dp-s001"
+
+
+class TestSessionsCLIUserFlag:
+    """Tests for --user flag in sessions CLI."""
+
+    @pytest.fixture
+    def multi_user_sessions(self, tmp_path, monkeypatch):
+        """Create a sessions file with multiple users."""
+        from skill_issues.sessions import store
+
+        memory_dir = tmp_path / ".memory"
+        memory_dir.mkdir()
+        sessions_file = memory_dir / "sessions.jsonl"
+        sessions_file.write_text(
+            '{"id":"dp-s001","user":"dp","date":"2025-01-01","topic":"dp topic 1","learnings":[],"open_questions":[],"next_actions":[],"issues_worked":[]}\n'
+            '{"id":"jb-s001","user":"jb","date":"2025-01-01","topic":"jb topic 1","learnings":[],"open_questions":[],"next_actions":[],"issues_worked":[]}\n'
+            '{"id":"dp-s002","user":"dp","date":"2025-01-02","topic":"dp topic 2","learnings":[],"open_questions":[],"next_actions":[],"issues_worked":[]}\n'
+            '{"id":"jb-s002","user":"jb","date":"2025-01-02","topic":"jb topic 2","learnings":[],"open_questions":[],"next_actions":[],"issues_worked":[]}\n'
+        )
+        # Patch the module-level constant
+        monkeypatch.setattr(store, "SESSIONS_FILE", sessions_file)
+        return sessions_file
+
+    def test_default_filters_to_current_user(self, multi_user_sessions, monkeypatch):
+        """Default query should only show current user's sessions."""
+        from skill_issues.sessions import store
+
+        monkeypatch.setattr(store, "get_user_prefix", lambda: ("dp", True))
+
+        # Load sessions and apply default filtering
+        all_sessions = store.load_sessions()
+        filtered = store.filter_by_user(all_sessions)
+
+        assert len(filtered) == 2
+        assert all(s["user"] == "dp" for s in filtered)
+
+    def test_user_all_shows_all_users(self, multi_user_sessions):
+        """--user all should show sessions from all users."""
+        from skill_issues.sessions import store
+
+        all_sessions = store.load_sessions()
+        assert len(all_sessions) == 4
+
+    def test_user_specific_filters_to_that_user(self, multi_user_sessions):
+        """--user <prefix> should filter to that specific user."""
+        from skill_issues.sessions import store
+
+        all_sessions = store.load_sessions()
+        filtered = store.filter_by_user(all_sessions, user="jb")
+
+        assert len(filtered) == 2
+        assert all(s["user"] == "jb" for s in filtered)
+
+    def test_user_flag_combines_with_last(self, multi_user_sessions, monkeypatch):
+        """--user flag should work with --last N."""
+        from skill_issues.sessions import store
+
+        monkeypatch.setattr(store, "get_user_prefix", lambda: ("dp", True))
+
+        all_sessions = store.load_sessions()
+        filtered = store.filter_by_user(all_sessions)
+        last_one = filtered[-1:]
+
+        assert len(last_one) == 1
+        assert last_one[0]["id"] == "dp-s002"

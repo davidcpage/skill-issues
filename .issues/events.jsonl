@@ -185,3 +185,4 @@
 {"ts":"2025-12-19T11:01:33Z","type":"closed","id":"dp-080","reason":"Implemented get_user_prefix() in skill_issues/__init__.py with full fallback chain (env var -> git config -> derived from user.name -> xx), validation (2-4 chars, alphanumeric), and 25 tests."}
 {"ts":"2025-12-19T11:05:21Z","type":"closed","id":"dp-081","reason":"Updated session ID format to dp-s001. Added user field to sessions, parse_session_id() for parsing both old/new formats, filter_by_user() for user filtering, and 20 tests."}
 {"ts":"2025-12-19T11:06:58Z","type":"closed","id":"dp-084","reason":"Updated issue ID format to dp-001. Added parse_issue_id() for parsing both old/new formats, updated next_id() to scope IDs per user prefix, and 18 tests."}
+{"ts":"2025-12-19T11:36:28Z","type":"closed","id":"dp-082","reason":"Implemented --user flag: default filters to current user, --user all shows everyone, --user <prefix> filters to specific user. 4 new tests added."}
