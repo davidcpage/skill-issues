@@ -191,3 +191,11 @@
 {"ts":"2025-12-19T11:47:30Z","type":"closed","id":"dp-083","reason":"Added user tabs to sessions board TUI: current user first, others alphabetically, All tab last. h/l keys navigate tabs."}
 {"ts":"2025-12-19T11:48:52Z","type":"closed","id":"dp-088","reason":"Added first-run prefix derivation hint. Shows once per project when prefix is derived from user.name."}
 {"ts":"2025-12-19T11:53:13Z","type":"closed","id":"dp-087","reason":"Updated sessions and issues SKILL.md: new ID formats, user prefix config, --user flag, TUI tabs"}
+{"ts":"2025-12-19T12:50:30Z","type":"created","id":"dp-089","title":"Sessions board UI polish: text wrapping and tab focus","issue_type":"task","priority":2}
+{"ts":"2025-12-19T12:50:34Z","type":"note","id":"dp-089","content":"1. Text wrapping in list view: Session text sometimes wraps to a second line which looks messy. Either truncate text further to fit on one line, or widen the list view panel."}
+{"ts":"2025-12-19T12:50:38Z","type":"note","id":"dp-089","content":"2. Tab switching loses list focus: With multi-user tabbing, switching tabs loses focus on the list. Need logic to maintain or set a focus item after switching tabs."}
+{"ts":"2025-12-19T12:51:17Z","type":"created","id":"dp-090","title":"Add 'show' as a subcommand for issues CLI","issue_type":"task","priority":2}
+{"ts":"2025-12-19T12:51:24Z","type":"note","id":"dp-090","content":"Currently 'show' is only available as --show flag. Users naturally try 'issues show ID' which fails. Add 'show' as a subcommand alongside board, init, create, close, note, etc."}
+{"ts":"2025-12-19T12:56:46Z","type":"closed","id":"dp-089","reason":"Fixed: widened list panel to 45%, reduced topic truncation to 28 chars, added height:1 to prevent wrapping, added refresh() calls after tab switch"}
+{"ts":"2025-12-19T12:56:46Z","type":"closed","id":"dp-090","reason":"Added 'show' as a subcommand alongside board, init, create, close, note, etc."}
+{"ts":"2025-12-19T13:03:32Z","type":"note","id":"dp-089","content":"Additional fix required: using clear() instead of remove_children(), and call_after_refresh() with index reset to None then 0, plus action_select_cursor() to properly trigger highlight after tab switch."}

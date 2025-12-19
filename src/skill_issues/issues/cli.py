@@ -91,6 +91,9 @@ def main() -> int:
         remove_dep_parser.add_argument("id", help="Issue ID")
         remove_dep_parser.add_argument("dep_ids", help="Comma-separated dependency IDs to remove")
 
+        show_parser = subparsers.add_parser("show", help="Show details of an issue")
+        show_parser.add_argument("id", help="Issue ID to show")
+
     # Positional argument for issue ID(s) (implicit --show)
     parser.add_argument("issue_ids", nargs="*", metavar="ID", help="Issue ID(s) to show (shorthand for --show)")
 
@@ -205,6 +208,14 @@ def main() -> int:
         except ValueError as e:
             print(json.dumps({"error": str(e)}), file=sys.stderr)
             return 1
+        return 0
+
+    if subcommand == "show":
+        all_issues = store.load_issues()
+        if args.id not in all_issues:
+            print(json.dumps({"error": f"Issue {args.id} not found"}), file=sys.stderr)
+            return 1
+        print(json.dumps(all_issues[args.id], indent=2))
         return 0
 
     # Handle write commands (flag syntax - kept for backward compatibility)

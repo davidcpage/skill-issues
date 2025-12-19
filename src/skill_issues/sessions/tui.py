@@ -33,9 +33,10 @@ class SessionListItem(ListItem):
 
         date = s.get("date", "????-??-??")
         topic = s.get("topic", "untitled")
-        # Truncate topic if too long
-        if len(topic) > 35:
-            topic = topic[:32] + "..."
+        # Truncate topic to fit in list panel (date=10 + space + topic + stats)
+        max_topic = 28
+        if len(topic) > max_topic:
+            topic = topic[:max_topic - 3] + "..."
 
         yield Static(f"[dim]{date}[/] {topic}{stat_str}")
 
@@ -113,13 +114,13 @@ class SessionsApp(App):
     }
 
     #session-list {
-        width: 40%;
+        width: 45%;
         border: solid green;
         padding: 0 1;
     }
 
     #session-detail {
-        width: 60%;
+        width: 55%;
         border: solid blue;
         padding: 1 2;
         overflow-y: auto;
@@ -149,6 +150,7 @@ class SessionsApp(App):
 
     ListView > ListItem {
         padding: 0 1;
+        height: 1;
     }
 
     ListView > ListItem.--highlight {
@@ -272,11 +274,7 @@ class SessionsApp(App):
         self.search_term = ""
         search_input = self.query_one("#search-input", Input)
         search_input.value = ""
-        self._apply_filter()
-
-        # Focus back on list
-        list_view = self.query_one("#list-view", ListView)
-        list_view.focus()
+        self._apply_filter()  # This handles deferred selection via call_after_refresh
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         """Handle session selection."""
@@ -299,6 +297,18 @@ class SessionsApp(App):
             search_box.remove_class("visible")
             list_view = self.query_one("#list-view", ListView)
             list_view.focus()
+
+    def _select_first_item(self) -> None:
+        """Select the first item in the list after a refresh."""
+        list_view = self.query_one("#list-view", ListView)
+        list_view.focus()
+        if self.filtered_sessions and list_view.children:
+            # Reset index to force highlight update
+            list_view.index = None
+            list_view.index = 0
+            # Trigger cursor action to ensure highlight is visible
+            list_view.action_select_cursor()
+            self._show_selected_session()
 
     def _show_selected_session(self) -> None:
         """Update detail view with currently highlighted session."""
@@ -323,16 +333,15 @@ class SessionsApp(App):
         else:
             self.filtered_sessions = self.sessions
 
-        # Rebuild the list view
+        # Rebuild the list view using clear() which properly resets ListView state
         list_view = self.query_one("#list-view", ListView)
-        list_view.remove_children()
+        list_view.clear()
         for s in self.filtered_sessions:
             list_view.append(SessionListItem(s))
 
-        # Update detail view
+        # Defer selection until list is fully rebuilt
         if self.filtered_sessions:
-            list_view.index = 0
-            self._show_selected_session()
+            self.call_after_refresh(self._select_first_item)
         else:
             detail = self.query_one("#session-detail", SessionDetail)
             detail.clear()
