@@ -15,13 +15,32 @@ from skill_issues import get_user_prefix
 
 # Data file lives in project root (current working directory)
 PROJECT_ROOT = Path.cwd()
-SESSIONS_FILE = PROJECT_ROOT / ".memory/sessions.jsonl"
+SESSIONS_DIR = PROJECT_ROOT / ".sessions"
+SESSIONS_FILE = SESSIONS_DIR / "events.jsonl"
+
+# Legacy paths for migration
+LEGACY_DIR = PROJECT_ROOT / ".memory"
+LEGACY_FILE = LEGACY_DIR / "sessions.jsonl"
+
+
+def _migrate_if_needed() -> None:
+    """Migrate from old .memory/sessions.jsonl to new .sessions/events.jsonl."""
+    if LEGACY_FILE.exists() and not SESSIONS_FILE.exists():
+        # Create new directory
+        SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
+        # Move the file
+        LEGACY_FILE.rename(SESSIONS_FILE)
+        # Remove old directory if empty
+        if LEGACY_DIR.exists() and not any(LEGACY_DIR.iterdir()):
+            LEGACY_DIR.rmdir()
+        print(f"Migrated {LEGACY_DIR}/ to {SESSIONS_DIR}/")
 
 
 def ensure_data_file() -> None:
     """Create data directory and file if missing."""
-    if not SESSIONS_FILE.parent.exists():
-        SESSIONS_FILE.parent.mkdir(parents=True)
+    _migrate_if_needed()
+    if not SESSIONS_DIR.exists():
+        SESSIONS_DIR.mkdir(parents=True)
     if not SESSIONS_FILE.exists():
         SESSIONS_FILE.touch()
 

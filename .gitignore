@@ -5,7 +5,7 @@ __pycache__/
 *.pyc
 
 # Local state
-.memory/.prefix-hint-shown
+.sessions/.prefix-hint-shown
 
 # Lock files (generated)
 uv.lock

@@ -16,7 +16,7 @@ uv tool install skill-issues
 
 ## Data Location
 
-Sessions are stored in `.memory/sessions.jsonl` (project root) - one JSON object per line, append-only.
+Sessions are stored in `.sessions/events.jsonl` (project root) - one JSON object per line, append-only.
 
 ## User Prefix
 

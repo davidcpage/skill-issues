@@ -8,7 +8,7 @@ from pathlib import Path
 __version__ = "0.1.0"
 
 # File marker to track if we've shown the prefix hint in this project
-_HINT_MARKER = Path.cwd() / ".memory" / ".prefix-hint-shown"
+_HINT_MARKER = Path.cwd() / ".sessions" / ".prefix-hint-shown"
 
 
 class PrefixError(Exception):

@@ -2,11 +2,17 @@
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal, ScrollableContainer, Vertical
 from textual.widgets import Footer, Header, Input, ListItem, ListView, Static
 
 from skill_issues import get_user_prefix
 from . import store
+
+
+class NonFocusableScrollableContainer(ScrollableContainer):
+    """ScrollableContainer that cannot receive focus."""
+
+    can_focus = False
 
 
 class SessionListItem(ListItem):
@@ -119,11 +125,14 @@ class SessionsApp(App):
         padding: 0 1;
     }
 
-    #session-detail {
+    #detail-container {
         width: 55%;
         border: solid blue;
         padding: 1 2;
-        overflow-y: auto;
+    }
+
+    #session-detail {
+        width: 100%;
     }
 
     #main-container {
@@ -225,7 +234,8 @@ class SessionsApp(App):
                     *[SessionListItem(s) for s in self.filtered_sessions],
                     id="list-view"
                 )
-            yield SessionDetail(id="session-detail")
+            with NonFocusableScrollableContainer(id="detail-container"):
+                yield SessionDetail(id="session-detail")
         yield Footer()
 
     def _render_user_bar(self) -> str:

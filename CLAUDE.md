@@ -16,8 +16,8 @@ Each skill is self-documenting via its `SKILL.md` file. Invoke them naturally by
 
 This repo includes real data from building these skills:
 - `.issues/events.jsonl` - Issues tracking the project
-- `.memory/sessions.jsonl` - Sessions of learnings
-- `.decisions/` - Design decisions made along the way
+- `.sessions/events.jsonl` - Sessions of learnings
+- `decisions/` - Design decisions made along the way
 
 ## Installation
 
@@ -84,7 +84,7 @@ uv tool install --upgrade skill-issues
 issues init --all --update
 ```
 
-The `--update` flag overwrites existing SKILL.md files with the latest versions. It only affects documentation - your data (`.issues/`, `.memory/`, `.decisions/`) is never modified.
+The `--update` flag overwrites existing SKILL.md files with the latest versions. It only affects documentation - your data (`.issues/`, `.sessions/`, `decisions/`) is never modified.
 
 Data directories are created automatically on first use.
 

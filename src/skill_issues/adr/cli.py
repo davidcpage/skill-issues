@@ -9,7 +9,17 @@ from pathlib import Path
 
 def get_decisions_dir() -> Path:
     """Get the decisions directory path."""
-    return Path.cwd() / ".decisions"
+    return Path.cwd() / "decisions"
+
+
+def _migrate_if_needed() -> None:
+    """Migrate from old .decisions/ to new decisions/ folder."""
+    legacy_dir = Path.cwd() / ".decisions"
+    new_dir = Path.cwd() / "decisions"
+
+    if legacy_dir.exists() and not new_dir.exists():
+        legacy_dir.rename(new_dir)
+        print(f"Migrated {legacy_dir}/ to {new_dir}/")
 
 
 def find_next_number(decisions_dir: Path) -> int:
@@ -154,7 +164,7 @@ def list_adrs() -> int:
     decisions_dir = get_decisions_dir()
 
     if not decisions_dir.exists():
-        print("No .decisions directory found")
+        print("No decisions/ directory found")
         return 0
 
     drafts = []
@@ -186,6 +196,8 @@ def list_adrs() -> int:
 
 def main() -> int:
     """Entry point for the adr command."""
+    _migrate_if_needed()
+
     parser = argparse.ArgumentParser(
         description="Architecture Decision Records skill",
         formatter_class=argparse.RawDescriptionHelpFormatter,

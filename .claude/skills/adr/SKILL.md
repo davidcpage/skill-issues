@@ -13,8 +13,8 @@ Lightweight decision records for capturing significant technical decisions with 
 
 **On first use in a repo, confirm with the user:**
 
-1. **Storage location** - Default: `.decisions/`
-   - Alternatives: `docs/adr/`, `docs/decisions/`, `dev/decisions/`
+1. **Storage location** - Default: `decisions/`
+   - Alternatives: `docs/adr/`, `docs/decisions/`
 
 2. **File naming** - Default: `NNN-short-name.md` (e.g., `001-auth-approach.md`)
 
