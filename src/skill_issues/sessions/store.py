@@ -6,9 +6,12 @@ It can be imported independently of the CLI.
 """
 
 import json
+import re
 from datetime import date
 from pathlib import Path
 from typing import Any
+
+from skill_issues import get_user_prefix
 
 # Data file lives in project root (current working directory)
 PROJECT_ROOT = Path.cwd()
@@ -35,18 +38,50 @@ def load_sessions() -> list[dict[str, Any]]:
     return sessions
 
 
-def next_session_id(sessions: list[dict[str, Any]]) -> str:
-    """Generate next session ID from existing sessions."""
-    if not sessions:
-        return "s001"
+def parse_session_id(session_id: str) -> tuple[str | None, int | None]:
+    """Parse a session ID into (prefix, number).
 
+    Handles both old format (s001) and new format (dp-s001).
+
+    Returns:
+        Tuple of (prefix, number). prefix is None for old-format IDs.
+        Returns (None, None) if the ID doesn't match any known format.
+    """
+    # New format: prefix-sNNN (e.g., dp-s001)
+    new_match = re.match(r"^([a-z0-9]{2,4})-s(\d+)$", session_id)
+    if new_match:
+        return (new_match.group(1), int(new_match.group(2)))
+
+    # Old format: sNNN (e.g., s001)
+    old_match = re.match(r"^s(\d+)$", session_id)
+    if old_match:
+        return (None, int(old_match.group(1)))
+
+    return (None, None)
+
+
+def next_session_id(sessions: list[dict[str, Any]], prefix: str | None = None) -> str:
+    """Generate next session ID for the current user.
+
+    Args:
+        sessions: List of all sessions.
+        prefix: User prefix to use. If None, uses get_user_prefix().
+
+    Returns:
+        Next session ID in format "prefix-sNNN" (e.g., "dp-s001").
+    """
+    if prefix is None:
+        prefix, _ = get_user_prefix()
+
+    # Find max number for this user's sessions
     max_num = 0
     for s in sessions:
         sid = s.get("id", "")
-        if sid.startswith("s") and sid[1:].isdigit():
-            max_num = max(max_num, int(sid[1:]))
+        parsed_prefix, num = parse_session_id(sid)
+        if parsed_prefix == prefix and num is not None:
+            max_num = max(max_num, num)
 
-    return f"s{max_num + 1:03d}"
+    return f"{prefix}-s{max_num + 1:03d}"
 
 
 def append_session(session: dict[str, Any]) -> None:
@@ -70,9 +105,11 @@ def create_session(
 ) -> dict[str, Any]:
     """Create a new session entry and return it."""
     sessions = load_sessions()
+    prefix, _ = get_user_prefix()
 
     session = {
-        "id": next_session_id(sessions),
+        "id": next_session_id(sessions, prefix),
+        "user": prefix,
         "date": date.today().isoformat(),
         "topic": topic,
         "learnings": learnings or [],
@@ -150,6 +187,32 @@ def _rewrite_sessions(sessions: list[dict[str, Any]]) -> None:
 
 
 # --- Filter functions ---
+
+def filter_by_user(sessions: list[dict[str, Any]], user: str | None = None) -> list[dict[str, Any]]:
+    """Return sessions for a specific user.
+
+    Args:
+        sessions: List of sessions to filter.
+        user: User prefix to filter by. If None, uses current user from get_user_prefix().
+
+    Returns:
+        Sessions belonging to the specified user.
+    """
+    if user is None:
+        user, _ = get_user_prefix()
+
+    result = []
+    for s in sessions:
+        # Check explicit user field first
+        if s.get("user") == user:
+            result.append(s)
+        # Fall back to parsing ID for legacy sessions
+        elif "user" not in s:
+            parsed_prefix, _ = parse_session_id(s.get("id", ""))
+            if parsed_prefix == user:
+                result.append(s)
+    return result
+
 
 def filter_by_issue(sessions: list[dict[str, Any]], issue_id: str) -> list[dict[str, Any]]:
     """Return sessions that worked on a specific issue."""

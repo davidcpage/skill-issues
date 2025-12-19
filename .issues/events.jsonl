@@ -182,3 +182,6 @@
 {"ts":"2025-12-19T10:43:33Z","type":"note","id":"084","content":"Updated: Issue ID format is dp-001 (with hyphen) not dp001, for consistency with session format dp-s001 and improved readability."}
 {"ts":"2025-12-19T10:43:33Z","type":"note","id":"080","content":"Resolved: Prefix must be 2-4 characters. No blank prefix allowed - ensures consistent ID formats and avoids parsing ambiguity."}
 {"ts":"2025-12-19T10:43:33Z","type":"note","id":"083","content":"Design decided: Tabs per user, ordered as: current user (selected by default), other users alphabetically, 'All' tab last."}
+{"ts":"2025-12-19T11:01:33Z","type":"closed","id":"080","reason":"Implemented get_user_prefix() in skill_issues/__init__.py with full fallback chain (env var -> git config -> derived from user.name -> xx), validation (2-4 chars, alphanumeric), and 25 tests."}
+{"ts":"2025-12-19T11:05:21Z","type":"closed","id":"081","reason":"Updated session ID format to dp-s001. Added user field to sessions, parse_session_id() for parsing both old/new formats, filter_by_user() for user filtering, and 20 tests."}
+{"ts":"2025-12-19T11:06:58Z","type":"closed","id":"084","reason":"Updated issue ID format to dp-001. Added parse_issue_id() for parsing both old/new formats, updated next_id() to scope IDs per user prefix, and 18 tests."}

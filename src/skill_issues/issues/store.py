@@ -6,9 +6,12 @@ It can be imported independently of the CLI.
 """
 
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+from skill_issues import get_user_prefix
 
 # Data file lives in project root (current working directory)
 PROJECT_ROOT = Path.cwd()
@@ -101,12 +104,49 @@ def load_issues() -> dict[str, dict[str, Any]]:
     return issues
 
 
-def next_id(issues: dict[str, dict[str, Any]]) -> str:
-    """Return next available issue ID (zero-padded 3 digits)."""
-    if not issues:
-        return "001"
-    max_id = max(int(i) for i in issues.keys())
-    return f"{max_id + 1:03d}"
+def parse_issue_id(issue_id: str) -> tuple[str | None, int | None]:
+    """Parse an issue ID into (prefix, number).
+
+    Handles both old format (001) and new format (dp-001).
+
+    Returns:
+        Tuple of (prefix, number). prefix is None for old-format IDs.
+        Returns (None, None) if the ID doesn't match any known format.
+    """
+    # New format: prefix-NNN (e.g., dp-001)
+    new_match = re.match(r"^([a-z0-9]{2,4})-(\d+)$", issue_id)
+    if new_match:
+        return (new_match.group(1), int(new_match.group(2)))
+
+    # Old format: NNN (e.g., 001, 088)
+    old_match = re.match(r"^(\d+)$", issue_id)
+    if old_match:
+        return (None, int(old_match.group(1)))
+
+    return (None, None)
+
+
+def next_id(issues: dict[str, dict[str, Any]], prefix: str | None = None) -> str:
+    """Return next available issue ID for the current user.
+
+    Args:
+        issues: Dict of all issues.
+        prefix: User prefix to use. If None, uses get_user_prefix().
+
+    Returns:
+        Next issue ID in format "prefix-NNN" (e.g., "dp-001").
+    """
+    if prefix is None:
+        prefix, _ = get_user_prefix()
+
+    # Find max number for this user's issues
+    max_num = 0
+    for issue_id in issues.keys():
+        parsed_prefix, num = parse_issue_id(issue_id)
+        if parsed_prefix == prefix and num is not None:
+            max_num = max(max_num, num)
+
+    return f"{prefix}-{max_num + 1:03d}"
 
 
 # --- Filter functions ---
@@ -147,7 +187,8 @@ def create_issue(
 ) -> str:
     """Create a new issue and return its ID."""
     issues = load_issues()
-    new_id = next_id(issues)
+    prefix, _ = get_user_prefix()
+    new_id = next_id(issues, prefix)
 
     event: dict[str, Any] = {
         "ts": get_timestamp(),
