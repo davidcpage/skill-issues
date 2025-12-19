@@ -1,1 +1,11 @@
 .DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# Local state
+.memory/.prefix-hint-shown
+
+# Lock files (generated)
+uv.lock

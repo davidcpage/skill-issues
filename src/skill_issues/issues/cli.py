@@ -16,8 +16,21 @@ def parse_list_arg(value: str) -> list[str] | None:
 
 
 def looks_like_issue_id(arg: str) -> bool:
-    """Check if an argument looks like an issue ID (3-digit number)."""
-    return arg.isdigit() and len(arg) == 3
+    """Check if an argument looks like an issue ID.
+
+    Supports both legacy format (001) and multi-user format (dp-001).
+    """
+    # Legacy format: 3-digit number
+    if arg.isdigit() and len(arg) == 3:
+        return True
+    # Multi-user format: 2-4 char prefix, hyphen, 3-digit number
+    if "-" in arg:
+        parts = arg.split("-", 1)
+        if len(parts) == 2:
+            prefix, num = parts
+            if 2 <= len(prefix) <= 4 and prefix.isalnum() and num.isdigit() and len(num) == 3:
+                return True
+    return False
 
 
 def main() -> int:
