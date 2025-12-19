@@ -14,7 +14,7 @@ SKILLS = ["issues", "sessions", "adr"]
 PERMISSIONS = {
     "issues": "Bash(issues:*)",
     "sessions": "Bash(sessions:*)",
-    # adr has no CLI, so no permission needed
+    "adr": "Bash(adr:*)",
 }
 
 # Find the repo root (for editable installs)

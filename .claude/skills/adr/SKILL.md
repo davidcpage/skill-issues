@@ -98,12 +98,25 @@ ADRs and issues serve different purposes:
 
 ## Creating an ADR
 
-1. Determine next number: `ls .decisions/ | tail -1` (or equivalent for your location)
-2. Create file with Draft status
+**Using the CLI (recommended):**
+```bash
+adr create auth-approach     # Creates draft-auth-approach.md
+# Edit the file...
+adr accept auth-approach     # Renames to NNN-auth-approach.md, updates status
+```
+
+**Manual process:**
+1. Create file as `draft-slug-name.md` (no number yet)
+2. Use Status: Draft
 3. Reference from related issues
 4. Discuss/iterate while Draft
-5. Mark Accepted when decided
+5. When ready: `adr accept slug-name` assigns next number and updates status
 6. Implement via issues
+
+**CLI Commands:**
+- `adr` - List all ADRs (accepted and drafts)
+- `adr create <slug>` - Create a new draft ADR
+- `adr accept <slug>` - Accept a draft, assign number, update status
 
 ## Protocol Fitness Note
 

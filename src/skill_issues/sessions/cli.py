@@ -4,11 +4,15 @@ import argparse
 import json
 import sys
 
+from skill_issues import maybe_show_prefix_hint
 from . import store
 
 
 def main() -> int:
     """Entry point for the sessions command."""
+    # Show one-time hint about prefix derivation
+    maybe_show_prefix_hint()
+
     parser = argparse.ArgumentParser(
         description="Session memory tool",
         formatter_class=argparse.RawDescriptionHelpFormatter,

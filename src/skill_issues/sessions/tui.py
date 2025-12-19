@@ -5,6 +5,7 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Footer, Header, Input, ListItem, ListView, Static
 
+from skill_issues import get_user_prefix
 from . import store
 
 
@@ -105,6 +106,12 @@ class SessionsApp(App):
     """A TUI for browsing session history."""
 
     CSS = """
+    #user-bar {
+        height: 1;
+        padding: 0 1;
+        background: $surface;
+    }
+
     #session-list {
         width: 40%;
         border: solid green;
@@ -123,7 +130,6 @@ class SessionsApp(App):
     }
 
     #search-box {
-        dock: top;
         height: auto;
         display: none;
         padding: 0 1;
@@ -158,20 +164,57 @@ class SessionsApp(App):
         Binding("G", "go_bottom", "Bottom"),
         Binding("/", "search", "Search"),
         Binding("escape", "clear_search", "Clear", show=False),
+        Binding("h", "prev_tab", "Prev User", show=False),
+        Binding("l", "next_tab", "Next User", show=False),
     ]
 
     def __init__(self, sessions: list[dict] | None = None) -> None:
         super().__init__()
         # Load sessions if not provided (most recent first)
         if sessions is None:
-            self.sessions = list(reversed(store.load_sessions()))
+            self.all_sessions = list(reversed(store.load_sessions()))
         else:
-            self.sessions = list(reversed(sessions))
+            self.all_sessions = list(reversed(sessions))
+
+        # Get current user and build user list
+        self.current_user, _ = get_user_prefix()
+        self.users = self._get_user_list()
+        self.selected_user: str | None = self.current_user  # None means "All"
+
+        # Apply user filter
+        self.sessions = self._filter_by_selected_user()
         self.filtered_sessions = self.sessions
         self.search_term = ""
+        self._ready_for_tab_changes = False  # Skip tab activations until ready
+
+    def _get_user_list(self) -> list[str]:
+        """Get list of users, ordered: current user first, others alphabetically."""
+        users_set: set[str] = set()
+        for s in self.all_sessions:
+            user = s.get("user")
+            if user:
+                users_set.add(user)
+            else:
+                # Parse from ID for legacy sessions
+                parsed_prefix, _ = store.parse_session_id(s.get("id", ""))
+                if parsed_prefix:
+                    users_set.add(parsed_prefix)
+
+        # Order: current user first, then others alphabetically
+        others = sorted(u for u in users_set if u != self.current_user)
+        if self.current_user in users_set:
+            return [self.current_user] + others
+        return others
+
+    def _filter_by_selected_user(self) -> list[dict]:
+        """Filter sessions by currently selected user tab."""
+        if self.selected_user is None:  # "All" tab
+            return self.all_sessions
+        return store.filter_by_user(self.all_sessions, self.selected_user)
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
+        yield Static(self._render_user_bar(), id="user-bar")
         with Vertical(id="search-box"):
             yield Input(placeholder="Filter by topic...", id="search-input")
         with Horizontal(id="main-container"):
@@ -183,6 +226,26 @@ class SessionsApp(App):
             yield SessionDetail(id="session-detail")
         yield Footer()
 
+    def _render_user_bar(self) -> str:
+        """Render the user selection bar."""
+        parts = []
+        for user in self.users:
+            if user == self.selected_user:
+                parts.append(f"[reverse] {user} [/]")
+            else:
+                parts.append(f" {user} ")
+        # Add "All" option
+        if self.selected_user is None:
+            parts.append("[reverse] All [/]")
+        else:
+            parts.append(" All ")
+        return " │ ".join(parts) + "  [dim](h/l to switch)[/]"
+
+    def _update_user_bar(self) -> None:
+        """Update the user bar display."""
+        user_bar = self.query_one("#user-bar", Static)
+        user_bar.update(self._render_user_bar())
+
     def on_mount(self) -> None:
         """Focus the list and show first session when app starts."""
         list_view = self.query_one("#list-view", ListView)
@@ -191,6 +254,29 @@ class SessionsApp(App):
         if self.filtered_sessions:
             list_view.index = 0
             self._show_selected_session()
+        # Force refresh to ensure items are rendered
+        list_view.refresh()
+        # Now ready for user-initiated tab changes
+        self._ready_for_tab_changes = True
+
+    def _switch_user(self, new_user: str | None) -> None:
+        """Switch to a different user filter."""
+        if new_user == self.selected_user:
+            return
+
+        self.selected_user = new_user
+        self._update_user_bar()
+
+        # Re-filter and update display
+        self.sessions = self._filter_by_selected_user()
+        self.search_term = ""
+        search_input = self.query_one("#search-input", Input)
+        search_input.value = ""
+        self._apply_filter()
+
+        # Focus back on list
+        list_view = self.query_one("#list-view", ListView)
+        list_view.focus()
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         """Handle session selection."""
@@ -239,7 +325,7 @@ class SessionsApp(App):
 
         # Rebuild the list view
         list_view = self.query_one("#list-view", ListView)
-        list_view.clear()
+        list_view.remove_children()
         for s in self.filtered_sessions:
             list_view.append(SessionListItem(s))
 
@@ -292,6 +378,28 @@ class SessionsApp(App):
             self._apply_filter()
             list_view = self.query_one("#list-view", ListView)
             list_view.focus()
+
+    def action_prev_tab(self) -> None:
+        """Move to previous user (vim h)."""
+        # Build full list: users + None (All)
+        options: list[str | None] = list(self.users) + [None]
+        if self.selected_user in options:
+            idx = options.index(self.selected_user)
+            new_idx = (idx - 1) % len(options)
+            self._switch_user(options[new_idx])
+        elif options:
+            self._switch_user(options[0])
+
+    def action_next_tab(self) -> None:
+        """Move to next user (vim l)."""
+        # Build full list: users + None (All)
+        options: list[str | None] = list(self.users) + [None]
+        if self.selected_user in options:
+            idx = options.index(self.selected_user)
+            new_idx = (idx + 1) % len(options)
+            self._switch_user(options[new_idx])
+        elif options:
+            self._switch_user(options[0])
 
 
 def run_app(sessions: list[dict] | None = None) -> None:

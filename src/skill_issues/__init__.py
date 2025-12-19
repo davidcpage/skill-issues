@@ -2,8 +2,13 @@
 
 import os
 import subprocess
+import sys
+from pathlib import Path
 
 __version__ = "0.1.0"
+
+# File marker to track if we've shown the prefix hint in this project
+_HINT_MARKER = Path.cwd() / ".memory" / ".prefix-hint-shown"
 
 
 class PrefixError(Exception):
@@ -111,3 +116,47 @@ def get_user_prefix() -> tuple[str, bool]:
 
     # 4. Fallback
     return ("xx", True)
+
+
+def maybe_show_prefix_hint() -> None:
+    """Show a one-time hint about derived prefix configuration.
+
+    This displays on first use in a project when the prefix was derived
+    from git config user.name rather than explicitly configured.
+
+    The hint is non-blocking and only shown once per project.
+    """
+    # Check if we've already shown the hint
+    if _HINT_MARKER.exists():
+        return
+
+    prefix, was_derived = get_user_prefix()
+
+    if not was_derived:
+        return
+
+    # Get the user.name for the message
+    user_name = _get_git_config("user.name")
+
+    # Create the marker file (and parent dir if needed)
+    try:
+        _HINT_MARKER.parent.mkdir(parents=True, exist_ok=True)
+        _HINT_MARKER.touch()
+    except OSError:
+        # If we can't write the marker, still show the hint but it may repeat
+        pass
+
+    # Show the hint
+    if user_name:
+        print(
+            f'Derived prefix "{prefix}" from git config user.name "{user_name}"',
+            file=sys.stderr,
+        )
+    else:
+        print(f'Using fallback prefix "{prefix}"', file=sys.stderr)
+
+    print(
+        'To customize: git config --global skill-issues.prefix "yourprefix"',
+        file=sys.stderr,
+    )
+    print(file=sys.stderr)

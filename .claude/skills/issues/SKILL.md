@@ -16,6 +16,22 @@ uv tool install skill-issues
 
 Events are stored in `.issues/events.jsonl` (project root) - one JSON event per line, append-only. The directory and file are auto-created on first use.
 
+## User Prefix
+
+Issue IDs include a user prefix (e.g., `dp-001`) to enable conflict-free collaboration. The prefix is resolved in order:
+
+1. `SKILL_ISSUES_PREFIX` environment variable
+2. `git config skill-issues.prefix`
+3. Derived from `git config user.name` (first + last initials)
+4. Fallback: `xx`
+
+**Configure once per machine:**
+```bash
+git config --global skill-issues.prefix "dp"
+```
+
+On first use with a derived prefix, you'll see a hint about configuration.
+
 ## Quick Reference
 
 ```bash
@@ -53,22 +69,22 @@ Four event types:
 
 ```json
 // created - sets initial fields
-{"ts": "2025-12-13T14:00:00Z", "type": "created", "id": "014", "title": "Short title", "issue_type": "task", "priority": 2, "description": "Details", "depends_on": ["013"], "labels": ["needs-review"]}
+{"ts": "2025-12-13T14:00:00Z", "type": "created", "id": "dp-014", "title": "Short title", "issue_type": "task", "priority": 2, "description": "Details", "depends_on": ["dp-013"], "labels": ["needs-review"]}
 
 // updated - changes mutable fields (priority, depends_on, labels)
-{"ts": "2025-12-13T14:15:00Z", "type": "updated", "id": "014", "priority": 1, "reason": "Blocking other work, needs to be done first"}
+{"ts": "2025-12-13T14:15:00Z", "type": "updated", "id": "dp-014", "priority": 1, "reason": "Blocking other work, needs to be done first"}
 
 // note - adds context during work (can have multiple per issue)
-{"ts": "2025-12-13T14:30:00Z", "type": "note", "id": "014", "content": "Discovered that the API requires auth tokens, not session cookies. See src/api/widget.ts:45"}
+{"ts": "2025-12-13T14:30:00Z", "type": "note", "id": "dp-014", "content": "Discovered that the API requires auth tokens, not session cookies. See src/api/widget.ts:45"}
 
 // closed - terminal state
-{"ts": "2025-12-13T15:00:00Z", "type": "closed", "id": "014", "reason": "Done - explanation"}
+{"ts": "2025-12-13T15:00:00Z", "type": "closed", "id": "dp-014", "reason": "Done - explanation"}
 ```
 
 **Fields:**
 - `ts`: ISO 8601 timestamp
 - `type`: "created", "updated", "note", or "closed"
-- `id`: Simple incrementing ID (string, e.g., "014")
+- `id`: User-prefixed ID (string, e.g., "dp-014")
 - `title`: Short description (created only)
 - `issue_type`: "bug", "feature", or "task" (created only)
 - `priority`: 0=critical, 1=high, 2=medium (default), 3=low, 4=backlog (created or updated)
@@ -97,8 +113,8 @@ issues --ready
 issues --all
 
 # Show single issue by ID
-issues 053          # shorthand
-issues --show 053   # explicit form
+issues dp-053          # shorthand
+issues --show dp-053   # explicit form
 ```
 
 Output is JSON array sorted by priority, then ID (except single issue which returns object).
@@ -127,10 +143,10 @@ issues create "API returns 500 on empty input" \
 
 # Feature blocked by other work
 issues create "Add export to CSV" \
-  -t feature -b 014,015 -l "needs-review"
+  -t feature -b dp-014,dp-015 -l "needs-review"
 ```
 
-Returns `{"created": "036"}` with the new issue ID.
+Returns `{"created": "dp-036"}` with the new issue ID.
 
 ## Adding Notes
 
@@ -140,7 +156,7 @@ issues note ID "Content"
 
 **Example:**
 ```bash
-issues note 015 "User clarified: they want CSV format, not JSON"
+issues note dp-015 "User clarified: they want CSV format, not JSON"
 ```
 
 **When to add notes:**
@@ -157,13 +173,13 @@ Add or remove dependencies from existing issues:
 
 ```bash
 # Add dependencies (comma-separated IDs)
-issues add-dep 014 "012,013"
+issues add-dep dp-014 "dp-012,dp-013"
 
 # Remove dependencies
-issues remove-dep 014 "012"
+issues remove-dep dp-014 "dp-012"
 ```
 
-Returns `{"issue": "014", "added_deps": ["012", "013"]}` or `{"issue": "014", "removed_deps": ["012"]}`.
+Returns `{"issue": "dp-014", "added_deps": ["dp-012", "dp-013"]}` or `{"issue": "dp-014", "removed_deps": ["dp-012"]}`.
 
 **Error handling:** Returns error JSON to stderr if issue doesn't exist, is already closed, or dependency IDs are invalid.
 
@@ -172,7 +188,7 @@ Returns `{"issue": "014", "added_deps": ["012", "013"]}` or `{"issue": "014", "r
 For other mutable fields (`priority`, `labels`), use the Edit tool to append an updated event to `.issues/events.jsonl`:
 
 ```json
-{"ts": "2025-12-13T14:15:00Z", "type": "updated", "id": "014", "priority": 1, "reason": "Blocking other work, needs to be done first"}
+{"ts": "2025-12-13T14:15:00Z", "type": "updated", "id": "dp-014", "priority": 1, "reason": "Blocking other work, needs to be done first"}
 ```
 
 **Mutable fields:**
@@ -190,10 +206,10 @@ issues close ID "Reason"
 
 **Example:**
 ```bash
-issues close 015 "Done - implemented CSV export with unicode support"
+issues close dp-015 "Done - implemented CSV export with unicode support"
 ```
 
-Returns `{"closed": "015"}` on success.
+Returns `{"closed": "dp-015"}` on success.
 
 **Error handling:** Returns error JSON to stderr if issue doesn't exist or is already closed.
 

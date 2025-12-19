@@ -186,3 +186,8 @@
 {"ts":"2025-12-19T11:05:21Z","type":"closed","id":"dp-081","reason":"Updated session ID format to dp-s001. Added user field to sessions, parse_session_id() for parsing both old/new formats, filter_by_user() for user filtering, and 20 tests."}
 {"ts":"2025-12-19T11:06:58Z","type":"closed","id":"dp-084","reason":"Updated issue ID format to dp-001. Added parse_issue_id() for parsing both old/new formats, updated next_id() to scope IDs per user prefix, and 18 tests."}
 {"ts":"2025-12-19T11:36:28Z","type":"closed","id":"dp-082","reason":"Implemented --user flag: default filters to current user, --user all shows everyone, --user <prefix> filters to specific user. 4 new tests added."}
+{"ts":"2025-12-19T11:46:09Z","type":"closed","id":"dp-085","reason":"Implemented adr create command that creates draft-slug.md files"}
+{"ts":"2025-12-19T11:46:09Z","type":"closed","id":"dp-086","reason":"Implemented adr accept command that renames draft to NNN-slug.md and updates status"}
+{"ts":"2025-12-19T11:47:30Z","type":"closed","id":"dp-083","reason":"Added user tabs to sessions board TUI: current user first, others alphabetically, All tab last. h/l keys navigate tabs."}
+{"ts":"2025-12-19T11:48:52Z","type":"closed","id":"dp-088","reason":"Added first-run prefix derivation hint. Shows once per project when prefix is derived from user.name."}
+{"ts":"2025-12-19T11:53:13Z","type":"closed","id":"dp-087","reason":"Updated sessions and issues SKILL.md: new ID formats, user prefix config, --user flag, TUI tabs"}

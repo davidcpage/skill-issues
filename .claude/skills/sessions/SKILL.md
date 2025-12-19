@@ -18,19 +18,37 @@ uv tool install skill-issues
 
 Sessions are stored in `.memory/sessions.jsonl` (project root) - one JSON object per line, append-only.
 
-**Note:** Sessions are personal (single-user). Unlike issues, they are not designed for multi-user sync via git.
+## User Prefix
+
+Session IDs include a user prefix (e.g., `dp-s001`) to enable multi-user collaboration. The prefix is resolved in order:
+
+1. `SKILL_ISSUES_PREFIX` environment variable
+2. `git config skill-issues.prefix`
+3. Derived from `git config user.name` (first + last initials)
+4. Fallback: `xx`
+
+**Configure once per machine:**
+```bash
+git config --global skill-issues.prefix "dp"
+```
+
+On first use with a derived prefix, you'll see a hint about configuration.
+
+**Note:** Sessions are filtered by user by default. Use `--user all` to see all users' sessions.
 
 ## Quick Reference
 
 ```bash
-# Reading
-sessions                  # Last session (default)
-sessions --last 3         # Last N sessions
-sessions --all            # All sessions
+# Reading (filtered to current user by default)
+sessions                  # Last session (current user)
+sessions --last 3         # Last N sessions (current user)
+sessions --last 5 --user all  # Last 5 from all users
+sessions --user xy        # Last session from user 'xy'
+sessions --all            # All sessions (current user)
 sessions --open-questions # All open questions across sessions
 sessions --next-actions   # All next actions (with session attribution)
 sessions --topic beads    # Search by topic
-sessions --issue 014      # Sessions that worked on a specific issue
+sessions --issue dp-014   # Sessions that worked on a specific issue
 sessions --summary        # Markdown summary for documentation
 sessions --timeline       # Markdown timeline of sessions
 
@@ -38,14 +56,15 @@ sessions --timeline       # Markdown timeline of sessions
 sessions --create "topic" [options]
 
 # TUI
-sessions board            # Interactive session browser
+sessions board            # Interactive session browser (with user tabs)
 ```
 
 ## Schema
 
 ```json
 {
-  "id": "s001",
+  "id": "dp-s001",
+  "user": "dp",
   "date": "2025-12-13",
   "topic": "feature-implementation",
   "learnings": [
@@ -58,12 +77,13 @@ sessions board            # Interactive session browser
   "next_actions": [
     "Concrete follow-up task"
   ],
-  "issues_worked": ["014", "015"]
+  "issues_worked": ["dp-014", "dp-015"]
 }
 ```
 
 **Fields:**
-- `id`: Unique session ID (e.g., "s001", "s002")
+- `id`: User-prefixed session ID (e.g., "dp-s001", "jb-s001")
+- `user`: User prefix (matches prefix in ID)
 - `date`: ISO date (YYYY-MM-DD)
 - `topic`: Primary topic or theme of the session
 - `learnings`: Key insights - meta-knowledge, not actionable work
@@ -74,13 +94,18 @@ sessions board            # Interactive session browser
 ## Reading Sessions
 
 ```bash
-# Last session (default - most common for session startup)
+# Last session (current user only - most common for session startup)
 sessions
 
-# Last N sessions
+# Last N sessions (current user)
 sessions --last 3
 
-# All sessions
+# Cross-user queries with --user flag
+sessions --user all         # Last session from any user
+sessions --last 5 --user all  # Last 5 from all users
+sessions --user xy          # Last session from user 'xy'
+
+# All sessions (current user)
 sessions --all
 
 # All open questions across sessions
@@ -93,7 +118,7 @@ sessions --next-actions
 sessions --topic beads
 
 # Find sessions that worked on a specific issue
-sessions --issue 014
+sessions --issue dp-014
 
 # Generate markdown summary for documentation
 sessions --summary
@@ -114,9 +139,10 @@ sessions board
 ```
 
 **Features:**
+- User tabs at top: current user first, other users alphabetically, "All" tab last
 - Left panel: session list with date, topic, and counts
 - Right panel: expanded session details (learnings, questions, actions)
-- Vim navigation: `j`/`k` (up/down), `g`/`G` (top/bottom)
+- Vim navigation: `j`/`k` (up/down), `g`/`G` (top/bottom), `h`/`l` (prev/next tab)
 - Search: `/` to filter by topic, `Escape` to clear
 - Quit: `q`
 
@@ -197,7 +223,7 @@ Append a session entry capturing:
 |--------|----------|--------|
 | **Scope** | Time-bounded (one conversation) | Work-bounded (may span sessions) |
 | **Focus** | What we learned (meta) | What we need to do (concrete) |
-| **Sharing** | Personal, local | Collaborative, git-synced |
+| **Sharing** | User-scoped by default, git-synced | Collaborative, git-synced |
 | **References** | Can reference issues | Cannot reference sessions |
 
 **Key insight:** Not everything in `open_questions` or `next_actions` needs to become an issue. Sessions capture the thought; issues formalize the commitment.
@@ -205,5 +231,5 @@ Append a session entry capturing:
 ## Principles
 
 - **Append-only**: Never modify existing sessions
-- **Personal**: Not designed for multi-user sync
+- **User-scoped by default**: Sessions filter to current user; use `--user all` for collaboration
 - **One-way dependency**: Sessions reference issues, not vice versa

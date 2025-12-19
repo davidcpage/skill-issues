@@ -4,6 +4,7 @@ import argparse
 import json
 import sys
 
+from skill_issues import maybe_show_prefix_hint
 from . import store
 
 
@@ -21,6 +22,9 @@ def looks_like_issue_id(arg: str) -> bool:
 
 def main() -> int:
     """Entry point for the issues command."""
+    # Show one-time hint about prefix derivation
+    maybe_show_prefix_hint()
+
     # Check if first positional argument looks like an issue ID
     # If so, don't add subparsers to avoid conflict
     has_issue_id_arg = False
