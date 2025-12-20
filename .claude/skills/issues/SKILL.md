@@ -14,7 +14,7 @@ uv tool install skill-issues
 
 ## Data Location
 
-Events are stored in `.issues/events.jsonl` (project root) - one JSON event per line, append-only. The directory and file are auto-created on first use.
+Events are stored in `.issues/events-{prefix}.jsonl` (project root) - one JSON event per line, append-only. Each user writes to their own file (e.g., `events-dp.jsonl`), enabling conflict-free multi-user git workflows. Reading aggregates from all user files. The directory and file are auto-created on first use.
 
 ## User Prefix
 
@@ -185,7 +185,7 @@ Returns `{"issue": "dp-014", "added_deps": ["dp-012", "dp-013"]}` or `{"issue": 
 
 ## Other Updates
 
-For other mutable fields (`priority`, `labels`), use the Edit tool to append an updated event to `.issues/events.jsonl`:
+For other mutable fields (`priority`, `labels`), use the Edit tool to append an updated event to your user's events file (e.g., `.issues/events-dp.jsonl`):
 
 ```json
 {"ts": "2025-12-13T14:15:00Z", "type": "updated", "id": "dp-014", "priority": 1, "reason": "Blocking other work, needs to be done first"}

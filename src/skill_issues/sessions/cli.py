@@ -23,8 +23,10 @@ Examples:
   sessions --last 3                # Last 3 sessions (current user)
   sessions --last 5 --user all     # Last 5 sessions from all users
   sessions --user xy               # Last session from user 'xy'
+  sessions --by-issue dp-042       # Sessions that worked on issue dp-042
+  sessions --by-topic auth         # Sessions with 'auth' in topic
   sessions --open-questions        # All open questions
-  sessions --create "feature-x" -l "Learned thing" -i "001,002"
+  sessions --create "feature-x" -l "Learned thing" -i "dp-001,dp-002"
   sessions --amend -l "Another learning"      # Amend last session
 """
     )
@@ -38,8 +40,8 @@ Examples:
     query = parser.add_mutually_exclusive_group()
     query.add_argument("--all", action="store_true", help="Show all sessions")
     query.add_argument("--last", type=int, metavar="N", help="Show last N sessions")
-    query.add_argument("--issue", metavar="ID", help="Sessions that worked on issue ID")
-    query.add_argument("--topic", metavar="KEYWORD", help="Sessions with topic containing keyword")
+    query.add_argument("--by-issue", metavar="ID", dest="by_issue", help="Filter: sessions that worked on issue ID")
+    query.add_argument("--by-topic", metavar="KEYWORD", dest="by_topic", help="Filter: sessions with topic containing keyword")
     query.add_argument("--open-questions", action="store_true", help="Aggregate all open questions")
     query.add_argument("--next-actions", action="store_true", help="Aggregate all next actions")
     query.add_argument("--summary", action="store_true", help="Generate markdown summary for documentation")
@@ -165,10 +167,10 @@ Examples:
         output = store.aggregate_open_questions(sessions)
     elif args.next_actions:
         output = store.aggregate_next_actions(sessions)
-    elif args.issue:
-        output = store.filter_by_issue(sessions, args.issue)
-    elif args.topic:
-        output = store.filter_by_topic(sessions, args.topic)
+    elif args.by_issue:
+        output = store.filter_by_issue(sessions, args.by_issue)
+    elif args.by_topic:
+        output = store.filter_by_topic(sessions, args.by_topic)
     elif args.last:
         output = sessions[-args.last:]
     else:

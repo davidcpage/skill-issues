@@ -16,7 +16,7 @@ uv tool install skill-issues
 
 ## Data Location
 
-Sessions are stored in `.sessions/events.jsonl` (project root) - one JSON object per line, append-only.
+Sessions are stored in `.sessions/events-{prefix}.jsonl` (project root) - one JSON object per line, append-only. Each user writes to their own file (e.g., `events-dp.jsonl`), enabling conflict-free multi-user git workflows. Reading aggregates from all user files.
 
 ## User Prefix
 
@@ -47,8 +47,8 @@ sessions --user xy        # Last session from user 'xy'
 sessions --all            # All sessions (current user)
 sessions --open-questions # All open questions across sessions
 sessions --next-actions   # All next actions (with session attribution)
-sessions --topic beads    # Search by topic
-sessions --issue dp-014   # Sessions that worked on a specific issue
+sessions --by-topic beads    # Filter by topic
+sessions --by-issue dp-014   # Filter: sessions that worked on a specific issue
 sessions --summary        # Markdown summary for documentation
 sessions --timeline       # Markdown timeline of sessions
 
@@ -114,11 +114,11 @@ sessions --open-questions
 # All next actions (with session attribution)
 sessions --next-actions
 
-# Search by topic
-sessions --topic beads
+# Filter by topic
+sessions --by-topic beads
 
-# Find sessions that worked on a specific issue
-sessions --issue dp-014
+# Filter: sessions that worked on a specific issue
+sessions --by-issue dp-014
 
 # Generate markdown summary for documentation
 sessions --summary
