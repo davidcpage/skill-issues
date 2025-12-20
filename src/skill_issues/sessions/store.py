@@ -13,48 +13,88 @@ from typing import Any
 
 from skill_issues import get_user_prefix
 
-# Data file lives in project root (current working directory)
+# Data directory lives in project root (current working directory)
 PROJECT_ROOT = Path.cwd()
 SESSIONS_DIR = PROJECT_ROOT / ".sessions"
-SESSIONS_FILE = SESSIONS_DIR / "events.jsonl"
+LEGACY_EVENTS_FILE = SESSIONS_DIR / "events.jsonl"
 
-# Legacy paths for migration
+# Legacy paths for migration from .memory
 LEGACY_DIR = PROJECT_ROOT / ".memory"
-LEGACY_FILE = LEGACY_DIR / "sessions.jsonl"
+LEGACY_MEMORY_FILE = LEGACY_DIR / "sessions.jsonl"
+
+
+def get_user_events_file(prefix: str | None = None) -> Path:
+    """Get the per-user events file path."""
+    if prefix is None:
+        prefix, _ = get_user_prefix()
+    return SESSIONS_DIR / f"events-{prefix}.jsonl"
 
 
 def _migrate_if_needed() -> None:
     """Migrate from old .memory/sessions.jsonl to new .sessions/events.jsonl."""
-    if LEGACY_FILE.exists() and not SESSIONS_FILE.exists():
+    if LEGACY_MEMORY_FILE.exists() and not LEGACY_EVENTS_FILE.exists():
         # Create new directory
         SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
         # Move the file
-        LEGACY_FILE.rename(SESSIONS_FILE)
+        LEGACY_MEMORY_FILE.rename(LEGACY_EVENTS_FILE)
         # Remove old directory if empty
         if LEGACY_DIR.exists() and not any(LEGACY_DIR.iterdir()):
             LEGACY_DIR.rmdir()
         print(f"Migrated {LEGACY_DIR}/ to {SESSIONS_DIR}/")
 
 
-def ensure_data_file() -> None:
-    """Create data directory and file if missing."""
+def ensure_data_dir() -> None:
+    """Create data directory if missing."""
     _migrate_if_needed()
     if not SESSIONS_DIR.exists():
         SESSIONS_DIR.mkdir(parents=True)
-    if not SESSIONS_FILE.exists():
-        SESSIONS_FILE.touch()
 
 
-def load_sessions() -> list[dict[str, Any]]:
-    """Read all sessions from JSONL file."""
-    ensure_data_file()
+def ensure_user_events_file(prefix: str | None = None) -> Path:
+    """Create user's events file if missing and return path."""
+    ensure_data_dir()
+    events_file = get_user_events_file(prefix)
+    if not events_file.exists():
+        events_file.touch()
+    return events_file
 
+
+def _load_sessions_from_file(filepath: Path) -> list[dict[str, Any]]:
+    """Load sessions from a single JSONL file."""
+    if not filepath.exists():
+        return []
     sessions = []
-    for line in SESSIONS_FILE.read_text().splitlines():
+    for line in filepath.read_text().splitlines():
         if not line.strip():
             continue
         sessions.append(json.loads(line))
     return sessions
+
+
+def load_sessions() -> list[dict[str, Any]]:
+    """Read all sessions from all user files and legacy file."""
+    ensure_data_dir()
+    all_sessions: list[dict[str, Any]] = []
+
+    # Load from per-user files (events-*.jsonl)
+    for events_file in SESSIONS_DIR.glob("events-*.jsonl"):
+        all_sessions.extend(_load_sessions_from_file(events_file))
+
+    # Load from legacy shared file (events.jsonl)
+    all_sessions.extend(_load_sessions_from_file(LEGACY_EVENTS_FILE))
+
+    # Sort by date and then by ID for consistent ordering
+    all_sessions.sort(key=lambda s: (s.get("date", ""), s.get("id", "")))
+
+    return all_sessions
+
+
+def load_user_sessions(prefix: str | None = None) -> list[dict[str, Any]]:
+    """Read sessions from a specific user's file only."""
+    if prefix is None:
+        prefix, _ = get_user_prefix()
+    events_file = get_user_events_file(prefix)
+    return _load_sessions_from_file(events_file)
 
 
 def parse_session_id(session_id: str) -> tuple[str | None, int | None]:
@@ -104,15 +144,15 @@ def next_session_id(sessions: list[dict[str, Any]], prefix: str | None = None) -
 
 
 def append_session(session: dict[str, Any]) -> None:
-    """Append a session to the JSONL file."""
-    ensure_data_file()
+    """Append a session to the current user's events file."""
+    events_file = ensure_user_events_file()
 
-    content = SESSIONS_FILE.read_text()
+    content = events_file.read_text()
     if content and not content.endswith("\n"):
         content += "\n"
 
     line = json.dumps(session, separators=(",", ":"))
-    SESSIONS_FILE.write_text(content + line + "\n")
+    events_file.write_text(content + line + "\n")
 
 
 def create_session(
@@ -150,6 +190,8 @@ def amend_session(
 ) -> dict[str, Any] | None:
     """Amend an existing session by appending to its arrays.
 
+    Only works on the current user's sessions (in their per-user file).
+
     Args:
         session_id: Session ID to amend, or None for the most recent session.
         learnings: Learnings to add.
@@ -160,7 +202,8 @@ def amend_session(
     Returns:
         The amended session, or None if no sessions exist or ID not found.
     """
-    sessions = load_sessions()
+    # Load only current user's sessions
+    sessions = load_user_sessions()
     if not sessions:
         return None
 
@@ -193,16 +236,16 @@ def amend_session(
                 existing.append(issue_id)
         session["issues_worked"] = existing
 
-    # Rewrite the file
-    _rewrite_sessions(sessions)
+    # Rewrite the current user's file
+    _rewrite_user_sessions(sessions)
     return session
 
 
-def _rewrite_sessions(sessions: list[dict[str, Any]]) -> None:
-    """Rewrite the entire sessions file."""
-    ensure_data_file()
+def _rewrite_user_sessions(sessions: list[dict[str, Any]], prefix: str | None = None) -> None:
+    """Rewrite the current user's sessions file."""
+    events_file = ensure_user_events_file(prefix)
     lines = [json.dumps(s, separators=(",", ":")) for s in sessions]
-    SESSIONS_FILE.write_text("\n".join(lines) + "\n" if lines else "")
+    events_file.write_text("\n".join(lines) + "\n" if lines else "")
 
 
 # --- Filter functions ---

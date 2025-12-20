@@ -13,17 +13,32 @@ from typing import Any
 
 from skill_issues import get_user_prefix
 
-# Data file lives in project root (current working directory)
+# Data directory lives in project root (current working directory)
 PROJECT_ROOT = Path.cwd()
-EVENTS_FILE = PROJECT_ROOT / ".issues/events.jsonl"
+ISSUES_DIR = PROJECT_ROOT / ".issues"
+LEGACY_EVENTS_FILE = ISSUES_DIR / "events.jsonl"
 
 
-def ensure_data_file() -> None:
-    """Create data directory and file if missing."""
-    if not EVENTS_FILE.parent.exists():
-        EVENTS_FILE.parent.mkdir(parents=True)
-    if not EVENTS_FILE.exists():
-        EVENTS_FILE.touch()
+def get_user_events_file(prefix: str | None = None) -> Path:
+    """Get the per-user events file path."""
+    if prefix is None:
+        prefix, _ = get_user_prefix()
+    return ISSUES_DIR / f"events-{prefix}.jsonl"
+
+
+def ensure_data_dir() -> None:
+    """Create data directory if missing."""
+    if not ISSUES_DIR.exists():
+        ISSUES_DIR.mkdir(parents=True)
+
+
+def ensure_user_events_file(prefix: str | None = None) -> Path:
+    """Create user's events file if missing and return path."""
+    ensure_data_dir()
+    events_file = get_user_events_file(prefix)
+    if not events_file.exists():
+        events_file.touch()
+    return events_file
 
 
 def get_timestamp() -> str:
@@ -32,27 +47,53 @@ def get_timestamp() -> str:
 
 
 def append_event(event: dict[str, Any]) -> None:
-    """Append a JSON event to the events file."""
-    ensure_data_file()
+    """Append a JSON event to the current user's events file."""
+    events_file = ensure_user_events_file()
     # Ensure file ends with newline before appending
-    content = EVENTS_FILE.read_text()
+    content = events_file.read_text()
     needs_newline = content and not content.endswith("\n")
-    with open(EVENTS_FILE, "a") as f:
+    with open(events_file, "a") as f:
         if needs_newline:
             f.write("\n")
         f.write(json.dumps(event, separators=(",", ":")) + "\n")
         f.flush()
 
 
-def load_issues() -> dict[str, dict[str, Any]]:
-    """Read events and reconstruct current state of all issues."""
-    ensure_data_file()
-    issues: dict[str, dict[str, Any]] = {}
-
-    for line in EVENTS_FILE.read_text().splitlines():
+def _load_events_from_file(filepath: Path) -> list[dict[str, Any]]:
+    """Load events from a single JSONL file."""
+    if not filepath.exists():
+        return []
+    events = []
+    for line in filepath.read_text().splitlines():
         if not line.strip():
             continue
-        event = json.loads(line)
+        events.append(json.loads(line))
+    return events
+
+
+def _load_all_events() -> list[dict[str, Any]]:
+    """Load events from all user files and legacy file, sorted by timestamp."""
+    ensure_data_dir()
+    all_events: list[dict[str, Any]] = []
+
+    # Load from per-user files (events-*.jsonl)
+    for events_file in ISSUES_DIR.glob("events-*.jsonl"):
+        all_events.extend(_load_events_from_file(events_file))
+
+    # Load from legacy shared file (events.jsonl)
+    all_events.extend(_load_events_from_file(LEGACY_EVENTS_FILE))
+
+    # Sort by timestamp to ensure correct event ordering
+    all_events.sort(key=lambda e: e.get("ts", ""))
+
+    return all_events
+
+
+def load_issues() -> dict[str, dict[str, Any]]:
+    """Read events and reconstruct current state of all issues."""
+    issues: dict[str, dict[str, Any]] = {}
+
+    for event in _load_all_events():
         issue_id = event["id"]
         event_type = event["type"]
 

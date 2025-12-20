@@ -1,7 +1,7 @@
 # ADR 007: Multi-User Workflows
 
 **Status:** Accepted
-**Date:** 2025-12-19
+**Date:** 2025-12-19 (updated 2025-12-20)
 
 ## Context
 
@@ -103,6 +103,33 @@ The `adr accept` command:
 
 **Conflict handling:** If two users accept ADRs simultaneously, git merge conflict occurs. This is appropriate - accepting an ADR is a deliberate coordination point for small teams.
 
+### Per-User Event Files
+
+Rather than a shared `events.jsonl` that all users append to, each user writes to their own file:
+
+```
+.issues/
+  events-dp.jsonl    # dp's events
+  events-jb.jsonl    # jb's events
+.sessions/
+  events-dp.jsonl
+  events-jb.jsonl
+```
+
+**Event routing:** Events go to the **actor's file**, not the entity owner's file:
+- If `jb` adds a note to issue `dp-001`, that event goes in `events-jb.jsonl`
+- When loading issues, aggregate events from all user files
+
+**Benefits:**
+- **Zero merge conflicts** - Each user only appends to their own file
+- **Simpler git workflow** - No conflict resolution overhead
+- **Trivial per-user queries** - `cat .issues/events-dp.jsonl` without parsing
+- **Clear separation of actor vs entity** - Issue creator (in ID) and event actor (in file) are distinct concepts
+
+**Reading:** Aggregate all `events-*.jsonl` files, sort by timestamp. The `*` glob naturally discovers all users.
+
+**Legacy compatibility:** Also read from `events.jsonl` (shared legacy file) if present, using the `user` field for filtering.
+
 ### Migration Strategy
 
 Existing repositories have unnumbered sessions (`dp-s001`) and issues (`001`). Given there are only ~3 existing projects:
@@ -110,6 +137,7 @@ Existing repositories have unnumbered sessions (`dp-s001`) and issues (`001`). G
 - **Manual migration** is acceptable
 - Add user prefix to existing IDs in the JSONL files
 - Add `user` field to existing sessions
+- Legacy `events.jsonl` files continue to work (read path checks both)
 
 No automated migration tooling is planned unless adoption grows significantly.
 
@@ -118,7 +146,9 @@ No automated migration tooling is planned unless adoption grows significantly.
 ### Positive
 
 - **Zero coordination** - Users can create issues/sessions offline without conflicts
+- **Zero merge conflicts** - Per-user files mean no JSONL append conflicts
 - **Clear ownership** - Prefix immediately shows who created an item
+- **Actor vs entity separation** - Event files track who did the action, IDs track who created the entity
 - **No new config files** - Uses existing git config infrastructure
 - **Minimal friction** - Works out of the box with derived prefix
 - **Git-native** - All data still merges cleanly through git
