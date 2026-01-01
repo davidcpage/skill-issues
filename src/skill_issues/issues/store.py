@@ -11,25 +11,31 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from skill_issues import get_user_prefix
+from skill_issues import get_project_root, get_user_prefix
 
-# Data directory lives in project root (current working directory)
-PROJECT_ROOT = Path.cwd()
-ISSUES_DIR = PROJECT_ROOT / ".issues"
-LEGACY_EVENTS_FILE = ISSUES_DIR / "events.jsonl"
+
+def get_issues_dir() -> Path:
+    """Get the issues data directory path."""
+    return get_project_root() / ".issues"
+
+
+def get_legacy_events_file() -> Path:
+    """Get the legacy shared events file path."""
+    return get_issues_dir() / "events.jsonl"
 
 
 def get_user_events_file(prefix: str | None = None) -> Path:
     """Get the per-user events file path."""
     if prefix is None:
         prefix, _ = get_user_prefix()
-    return ISSUES_DIR / f"events-{prefix}.jsonl"
+    return get_issues_dir() / f"events-{prefix}.jsonl"
 
 
 def ensure_data_dir() -> None:
     """Create data directory if missing."""
-    if not ISSUES_DIR.exists():
-        ISSUES_DIR.mkdir(parents=True)
+    issues_dir = get_issues_dir()
+    if not issues_dir.exists():
+        issues_dir.mkdir(parents=True)
 
 
 def ensure_user_events_file(prefix: str | None = None) -> Path:
@@ -76,12 +82,14 @@ def _load_all_events() -> list[dict[str, Any]]:
     ensure_data_dir()
     all_events: list[dict[str, Any]] = []
 
+    issues_dir = get_issues_dir()
+
     # Load from per-user files (events-*.jsonl)
-    for events_file in ISSUES_DIR.glob("events-*.jsonl"):
+    for events_file in issues_dir.glob("events-*.jsonl"):
         all_events.extend(_load_events_from_file(events_file))
 
     # Load from legacy shared file (events.jsonl)
-    all_events.extend(_load_events_from_file(LEGACY_EVENTS_FILE))
+    all_events.extend(_load_events_from_file(get_legacy_events_file()))
 
     # Sort by timestamp to ensure correct event ordering
     all_events.sort(key=lambda e: e.get("ts", ""))

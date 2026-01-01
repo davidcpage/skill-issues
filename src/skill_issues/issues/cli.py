@@ -4,7 +4,7 @@ import argparse
 import json
 import sys
 
-from skill_issues import maybe_show_prefix_hint
+from skill_issues import maybe_show_prefix_hint, set_project_root
 from . import store
 
 
@@ -35,6 +35,14 @@ def looks_like_issue_id(arg: str) -> bool:
 
 def main() -> int:
     """Entry point for the issues command."""
+    # Parse --root early before any store operations
+    # This allows overriding project root resolution
+    root_parser = argparse.ArgumentParser(add_help=False)
+    root_parser.add_argument("--root", metavar="DIR", help="Project root directory")
+    root_args, _ = root_parser.parse_known_args()
+    if root_args.root:
+        set_project_root(root_args.root)
+
     # Show one-time hint about prefix derivation
     maybe_show_prefix_hint()
 
@@ -53,6 +61,10 @@ def main() -> int:
         description="Append-only issue tracker",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
+
+    # Project root override (parsed early, but included for help text)
+    parser.add_argument("--root", metavar="DIR",
+                        help="Project root directory (overrides auto-detection)")
 
     # Only add subcommands if we're not handling issue IDs
     if not has_issue_id_arg:

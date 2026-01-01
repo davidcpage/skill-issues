@@ -7,8 +7,96 @@ from pathlib import Path
 
 __version__ = "0.1.0"
 
+# Override for project root (set via CLI --root or programmatically)
+_project_root_override: Path | None = None
+
+
+def set_project_root(path: Path | str | None) -> None:
+    """Set an explicit project root override.
+
+    This takes precedence over all other resolution methods.
+    Call with None to clear the override.
+
+    Args:
+        path: Absolute path to use as project root, or None to clear.
+    """
+    global _project_root_override
+    if path is None:
+        _project_root_override = None
+    else:
+        _project_root_override = Path(path).resolve()
+
+
+def find_project_root(data_dir_name: str = ".issues") -> Path:
+    """Find the project root directory.
+
+    Resolution order:
+    1. Explicit override (set via set_project_root() or CLI --root)
+    2. SKILL_ISSUES_ROOT environment variable
+    3. Walk up from cwd looking for existing data directory (.issues or .sessions)
+    4. Walk up from cwd looking for .git directory
+    5. Fall back to current working directory
+
+    Args:
+        data_dir_name: The data directory to look for when walking up.
+                      Defaults to ".issues" but can be ".sessions".
+
+    Returns:
+        Path to the project root directory.
+    """
+    # 1. Explicit override
+    if _project_root_override is not None:
+        return _project_root_override
+
+    # 2. Environment variable
+    env_root = os.environ.get("SKILL_ISSUES_ROOT", "").strip()
+    if env_root:
+        return Path(env_root).resolve()
+
+    cwd = Path.cwd().resolve()
+
+    # 3. Walk up looking for existing data directories
+    # Check for both .issues and .sessions to find the nearest one
+    current = cwd
+    while True:
+        if (current / ".issues").is_dir() or (current / ".sessions").is_dir():
+            return current
+        parent = current.parent
+        if parent == current:  # Reached filesystem root
+            break
+        current = parent
+
+    # 4. Walk up looking for .git
+    current = cwd
+    while True:
+        if (current / ".git").exists():
+            return current
+        parent = current.parent
+        if parent == current:  # Reached filesystem root
+            break
+        current = parent
+
+    # 5. Fall back to cwd
+    return cwd
+
+
+def get_project_root() -> Path:
+    """Get the resolved project root.
+
+    This is a convenience wrapper around find_project_root() that
+    caches the result for the lifetime of the process.
+
+    Returns:
+        Path to the project root directory.
+    """
+    # Note: We don't cache because the override might change
+    return find_project_root()
+
+
 # File marker to track if we've shown the prefix hint in this project
-_HINT_MARKER = Path.cwd() / ".sessions" / ".prefix-hint-shown"
+def _get_hint_marker() -> Path:
+    """Get the path to the prefix hint marker file."""
+    return get_project_root() / ".sessions" / ".prefix-hint-shown"
 
 
 class PrefixError(Exception):
@@ -126,8 +214,10 @@ def maybe_show_prefix_hint() -> None:
 
     The hint is non-blocking and only shown once per project.
     """
+    hint_marker = _get_hint_marker()
+
     # Check if we've already shown the hint
-    if _HINT_MARKER.exists():
+    if hint_marker.exists():
         return
 
     prefix, was_derived = get_user_prefix()
@@ -140,8 +230,8 @@ def maybe_show_prefix_hint() -> None:
 
     # Create the marker file (and parent dir if needed)
     try:
-        _HINT_MARKER.parent.mkdir(parents=True, exist_ok=True)
-        _HINT_MARKER.touch()
+        hint_marker.parent.mkdir(parents=True, exist_ok=True)
+        hint_marker.touch()
     except OSError:
         # If we can't write the marker, still show the hint but it may repeat
         pass
