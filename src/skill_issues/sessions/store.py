@@ -11,43 +11,60 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from skill_issues import get_user_prefix
+from skill_issues import get_project_root, get_user_prefix
 
-# Data directory lives in project root (current working directory)
-PROJECT_ROOT = Path.cwd()
-SESSIONS_DIR = PROJECT_ROOT / ".sessions"
-LEGACY_EVENTS_FILE = SESSIONS_DIR / "events.jsonl"
 
-# Legacy paths for migration from .memory
-LEGACY_DIR = PROJECT_ROOT / ".memory"
-LEGACY_MEMORY_FILE = LEGACY_DIR / "sessions.jsonl"
+def get_sessions_dir() -> Path:
+    """Get the sessions data directory path."""
+    return get_project_root() / ".sessions"
+
+
+def get_legacy_events_file() -> Path:
+    """Get the legacy shared events file path."""
+    return get_sessions_dir() / "events.jsonl"
+
+
+def get_legacy_memory_dir() -> Path:
+    """Get the legacy .memory directory path (for migration)."""
+    return get_project_root() / ".memory"
+
+
+def get_legacy_memory_file() -> Path:
+    """Get the legacy .memory/sessions.jsonl file path (for migration)."""
+    return get_legacy_memory_dir() / "sessions.jsonl"
 
 
 def get_user_events_file(prefix: str | None = None) -> Path:
     """Get the per-user events file path."""
     if prefix is None:
         prefix, _ = get_user_prefix()
-    return SESSIONS_DIR / f"events-{prefix}.jsonl"
+    return get_sessions_dir() / f"events-{prefix}.jsonl"
 
 
 def _migrate_if_needed() -> None:
     """Migrate from old .memory/sessions.jsonl to new .sessions/events.jsonl."""
-    if LEGACY_MEMORY_FILE.exists() and not LEGACY_EVENTS_FILE.exists():
+    legacy_memory_file = get_legacy_memory_file()
+    legacy_events_file = get_legacy_events_file()
+    sessions_dir = get_sessions_dir()
+    legacy_dir = get_legacy_memory_dir()
+
+    if legacy_memory_file.exists() and not legacy_events_file.exists():
         # Create new directory
-        SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
+        sessions_dir.mkdir(parents=True, exist_ok=True)
         # Move the file
-        LEGACY_MEMORY_FILE.rename(LEGACY_EVENTS_FILE)
+        legacy_memory_file.rename(legacy_events_file)
         # Remove old directory if empty
-        if LEGACY_DIR.exists() and not any(LEGACY_DIR.iterdir()):
-            LEGACY_DIR.rmdir()
-        print(f"Migrated {LEGACY_DIR}/ to {SESSIONS_DIR}/")
+        if legacy_dir.exists() and not any(legacy_dir.iterdir()):
+            legacy_dir.rmdir()
+        print(f"Migrated {legacy_dir}/ to {sessions_dir}/")
 
 
 def ensure_data_dir() -> None:
     """Create data directory if missing."""
     _migrate_if_needed()
-    if not SESSIONS_DIR.exists():
-        SESSIONS_DIR.mkdir(parents=True)
+    sessions_dir = get_sessions_dir()
+    if not sessions_dir.exists():
+        sessions_dir.mkdir(parents=True)
 
 
 def ensure_user_events_file(prefix: str | None = None) -> Path:
@@ -76,12 +93,14 @@ def load_sessions() -> list[dict[str, Any]]:
     ensure_data_dir()
     all_sessions: list[dict[str, Any]] = []
 
+    sessions_dir = get_sessions_dir()
+
     # Load from per-user files (events-*.jsonl)
-    for events_file in SESSIONS_DIR.glob("events-*.jsonl"):
+    for events_file in sessions_dir.glob("events-*.jsonl"):
         all_sessions.extend(_load_sessions_from_file(events_file))
 
     # Load from legacy shared file (events.jsonl)
-    all_sessions.extend(_load_sessions_from_file(LEGACY_EVENTS_FILE))
+    all_sessions.extend(_load_sessions_from_file(get_legacy_events_file()))
 
     # Sort by date and then by ID for consistent ordering
     all_sessions.sort(key=lambda s: (s.get("date", ""), s.get("id", "")))
