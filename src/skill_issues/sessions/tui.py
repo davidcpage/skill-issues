@@ -177,6 +177,8 @@ class SessionsApp(App):
         Binding("escape", "clear_search", "Clear", show=False),
         Binding("h", "prev_tab", "Prev User", show=False),
         Binding("l", "next_tab", "Next User", show=False),
+        Binding("J", "scroll_detail_down", "Detail↓", show=False),
+        Binding("K", "scroll_detail_up", "Detail↑", show=False),
     ]
 
     def __init__(self, sessions: list[dict] | None = None) -> None:
@@ -419,6 +421,16 @@ class SessionsApp(App):
             self._switch_user(options[new_idx])
         elif options:
             self._switch_user(options[0])
+
+    def action_scroll_detail_down(self) -> None:
+        """Scroll the detail panel down (Shift+j)."""
+        detail_container = self.query_one("#detail-container", ScrollableContainer)
+        detail_container.scroll_down()
+
+    def action_scroll_detail_up(self) -> None:
+        """Scroll the detail panel up (Shift+k)."""
+        detail_container = self.query_one("#detail-container", ScrollableContainer)
+        detail_container.scroll_up()
 
 
 def run_app(sessions: list[dict] | None = None) -> None:

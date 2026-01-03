@@ -255,6 +255,8 @@ class IssuesBoardApp(App):
         Binding("g", "go_top", "Top"),
         Binding("G", "go_bottom", "Bottom"),
         Binding("r", "refresh", "Refresh"),
+        Binding("J", "scroll_detail_down", "Detail↓", show=False),
+        Binding("K", "scroll_detail_up", "Detail↑", show=False),
     ]
 
     def __init__(self) -> None:
@@ -272,7 +274,8 @@ class IssuesBoardApp(App):
                 yield KanbanColumn("Ready", "ready", id="ready-column")
                 yield KanbanColumn("Blocked", "blocked", id="blocked-column")
                 yield KanbanColumn("Closed", "closed", id="closed-column")
-            yield IssueDetail(id="detail-panel")
+            with ScrollableContainer(id="detail-panel"):
+                yield IssueDetail(id="issue-detail")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -366,7 +369,7 @@ class IssuesBoardApp(App):
 
     def _update_detail(self) -> None:
         """Update the detail panel with current selection."""
-        detail = self.query_one("#detail-panel", IssueDetail)
+        detail = self.query_one("#issue-detail", IssueDetail)
         col_id = self.columns[self.current_column]
         issues = self.column_issues[col_id]
         idx = self.current_index[col_id]
@@ -426,6 +429,16 @@ class IssuesBoardApp(App):
         self._load_issues()
         self._update_columns()
         self._update_selection()
+
+    def action_scroll_detail_down(self) -> None:
+        """Scroll the detail panel down (Shift+j)."""
+        detail_panel = self.query_one("#detail-panel", ScrollableContainer)
+        detail_panel.scroll_down()
+
+    def action_scroll_detail_up(self) -> None:
+        """Scroll the detail panel up (Shift+k)."""
+        detail_panel = self.query_one("#detail-panel", ScrollableContainer)
+        detail_panel.scroll_up()
 
 
 def run_app() -> None:
