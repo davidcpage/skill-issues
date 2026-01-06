@@ -69,6 +69,7 @@ def main() -> int:
     # Only add subcommands if we're not handling issue IDs
     if not has_issue_id_arg:
         subparsers = parser.add_subparsers(dest="subcommand")
+        subparsers.required = False  # Allow flag-only usage like `issues --open`
         subparsers.add_parser("board", help="Open interactive Kanban board TUI")
 
         init_parser = subparsers.add_parser("init", help="Initialize skills in a project")
@@ -105,9 +106,10 @@ def main() -> int:
 
         show_parser = subparsers.add_parser("show", help="Show details of an issue")
         show_parser.add_argument("id", help="Issue ID to show")
-
-    # Positional argument for issue ID(s) (implicit --show)
-    parser.add_argument("issue_ids", nargs="*", metavar="ID", help="Issue ID(s) to show (shorthand for --show)")
+    else:
+        # Positional argument for issue ID(s) (implicit --show)
+        # Only add when subparsers are NOT present to avoid argparse conflicts
+        parser.add_argument("issue_ids", nargs="+", metavar="ID", help="Issue ID(s) to show (shorthand for --show)")
 
     # Query flags (mutually exclusive with write commands)
     query_group = parser.add_mutually_exclusive_group()
@@ -309,18 +311,19 @@ def main() -> int:
         return 0
 
     # Handle positional issue IDs (one or more)
-    if args.issue_ids:
+    issue_ids = getattr(args, "issue_ids", None)
+    if issue_ids:
         # Check all IDs exist first
-        missing = [id for id in args.issue_ids if id not in all_issues]
+        missing = [id for id in issue_ids if id not in all_issues]
         if missing:
             print(json.dumps({"error": f"Issue(s) not found: {', '.join(missing)}"}), file=sys.stderr)
             return 1
         # Single ID: return object (backward compatible)
-        if len(args.issue_ids) == 1:
-            print(json.dumps(all_issues[args.issue_ids[0]], indent=2))
+        if len(issue_ids) == 1:
+            print(json.dumps(all_issues[issue_ids[0]], indent=2))
         else:
             # Multiple IDs: return array
-            results = [all_issues[id] for id in args.issue_ids]
+            results = [all_issues[id] for id in issue_ids]
             print(json.dumps(results, indent=2))
         return 0
 
