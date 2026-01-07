@@ -49,7 +49,7 @@ To update: `git pull` (in the skill-issues directory)
 
 You can also install skills individually: `issues init`, `sessions init`, `adr init`
 
-Data directories (`.issues/`, `.memory/`, `.decisions/`) are created automatically on first use.
+Data directories (`.issues/`, `.sessions/`) are created automatically on first use.
 
 ## Usage
 
@@ -118,10 +118,10 @@ Created session s028 capturing learnings and issues worked.
 **When facing a design choice:**
 > "We need to decide between SQLite and JSONL for storage - let's write up an ADR"
 
-Claude creates a decision record in `.decisions/` capturing context, options, and rationale:
+Claude creates a decision record in `decisions/` capturing context, options, and rationale:
 
 ```
-.decisions/
+decisions/
 ├── 001-sessions-vs-issues.md
 ├── 002-github-issues-compatibility.md
 └── 003-design-doc-process.md
