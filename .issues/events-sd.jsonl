@@ -1,0 +1,2 @@
+{"ts":"2026-01-07T16:13:55Z","type":"created","id":"sd-001","title":"Update README/code to refer to decisions rather than .decisions","issue_type":"task","priority":2}
+{"ts":"2026-01-07T16:16:15Z","type":"closed","id":"sd-001","reason":"Fixed - updated README.md and .claude/skills/adr/SKILL.md to use decisions/ instead of .decisions/"}

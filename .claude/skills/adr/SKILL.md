@@ -93,7 +93,7 @@ ADRs and issues serve different purposes:
 | Mutability | Append-only events | Evolve during draft, stable after |
 
 **Linking pattern:**
-- Issues reference ADRs: "Implements ADR-002" or "See `.decisions/002-...` for design"
+- Issues reference ADRs: "Implements ADR-002" or "See `decisions/002-...` for design"
 - ADRs optionally list related issues
 
 ## Creating an ADR
